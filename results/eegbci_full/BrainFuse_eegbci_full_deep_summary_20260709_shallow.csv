@@ -1,0 +1,9 @@
+task,model,protocol,protocol_kind,n_subjects,n_epochs,chance,mean_acc,std_acc,ci_low,ci_high
+imagery_left_right_fist,shallow_fbcsp,pooled_random,leaky_subject_ignored,109,4898,0.504287,0.735292,0.103109,0.717071,0.754624
+imagery_left_right_fist,shallow_fbcsp,cross_subject,rigorous_group_kfold,109,4898,0.504287,0.731262,0.109868,0.711699,0.751734
+real_left_right_fist,shallow_fbcsp,pooled_random,leaky_subject_ignored,109,4897,0.500715,0.727551,0.104609,0.708997,0.746979
+real_left_right_fist,shallow_fbcsp,cross_subject,rigorous_group_kfold,109,4897,0.500715,0.733947,0.10018,0.71595,0.752763
+imagery_fists_feet,shallow_fbcsp,pooled_random,leaky_subject_ignored,109,4897,0.500715,0.666838,0.122384,0.645281,0.6899
+imagery_fists_feet,shallow_fbcsp,cross_subject,rigorous_group_kfold,109,4897,0.500715,0.657999,0.124365,0.635565,0.681354
+real_fists_feet,shallow_fbcsp,pooled_random,leaky_subject_ignored,109,4879,0.501742,0.755165,0.125312,0.732539,0.778703
+real_fists_feet,shallow_fbcsp,cross_subject,rigorous_group_kfold,109,4879,0.501742,0.712936,0.11513,0.692611,0.73458

@@ -1,0 +1,2 @@
+dataset,n_subjects,acc_inductive,acc_transductive,reference_leakage,leak_ci_low,leak_ci_high
+bci2a,9,0.644676,0.645062,0.000385802,-0.00115741,0.00192901

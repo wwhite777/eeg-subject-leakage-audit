@@ -1,0 +1,7 @@
+dataset,model,protocol,n_subjects,n_epochs,chance,mean_acc,std_acc,ci_low,ci_high
+bci2a,csp_lda,pooled_random,9,2592,0.5,0.703318,0.134191,0.618818,0.792081
+bci2a,csp_lda,within_subject,9,2592,0.5,0.795525,0.131715,0.707166,0.880015
+bci2a,csp_lda,cross_subject,9,2592,0.5,0.655093,0.11801,0.587191,0.736111
+bci2a,riemann_ts_lr,pooled_random,9,2592,0.5,0.745756,0.130913,0.661642,0.832571
+bci2a,riemann_ts_lr,within_subject,9,2592,0.5,0.829475,0.116173,0.750762,0.903549
+bci2a,riemann_ts_lr,cross_subject,9,2592,0.5,0.644676,0.111628,0.574074,0.71876

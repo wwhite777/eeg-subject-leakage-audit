@@ -1,0 +1,5 @@
+model,contrast,mean_a,mean_b,mean_diff,wilcoxon_W,p_value,n
+csp_lda,leakage_inflation,0.5618,0.5758,-0.0140,1876.5,1.079e-03,109
+csp_lda,calibration_gap,0.6758,0.5758,+0.1000,82.0,1.204e-18,109
+riemann_ts_lr,leakage_inflation,0.6870,0.6186,+0.0684,175.0,1.423e-17,109
+riemann_ts_lr,calibration_gap,0.7070,0.6186,+0.0883,189.5,2.076e-17,109
