@@ -5,6 +5,8 @@ evaluation protocols × four decoder families × two public datasets (118 subjec
 The study isolates *why* subject-agnostic ("pooled") cross-validation inflates
 reported accuracy, and prescribes how to evaluate honestly.
 
+![Overview of the subject-leakage audit pipeline](result/figure/exp0_overview_fig1.png)
+
 ## TL;DR
 
 Pooled/record-wise cross-validation — where trials from one subject fall in both
