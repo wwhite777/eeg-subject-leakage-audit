@@ -60,7 +60,7 @@ def main() -> int:
     lines = [r"\begin{table}", r"\caption{EEGBCI (109 subjects; four paradigms averaged per subject): mean accuracy over subjects with the 2000-resample subject-bootstrap 95\,\% CI, "
              r"and paired per-subject differences. P0 = trial-random 3-fold, P1 = run-disjoint subject-overlapping 3-fold, P2 = subject-disjoint 3-fold (training fraction 2/3 in all three; "
              r"P0 and P2 averaged over five partition seeds; networks additionally over three training seeds); within = leave-one-run-out inside each subject (networks: fixed 60 epochs). "
-             r"$p$: two-sided paired Wilcoxon signed-rank test over the 109 subjects, Holm-adjusted within this table. Chance = 0.50.}", r"\label{tab:eegbci}", r"\centering", r"\footnotesize", r"\resizebox{\linewidth}{!}{%",
+             r"$p_{\rm Holm}$: two-sided paired Wilcoxon signed-rank test over the 109 subjects (differences rounded to 12 decimals before ranking), Holm-adjusted over the 12 contrasts displayed in this table. Chance = 0.50.}", r"\label{tab:eegbci}", r"\centering", r"\footnotesize", r"\resizebox{\linewidth}{!}{%",
              r"\begin{tabular}{l c c c c}", r"\hline", r"Decoder & within & P0 trial-random & P1 run-disjoint & P2 subject-disjoint \\", r"\hline"]
     for m in ("csp_lda", "riemann_ts_lr", "shallow_fbcsp", "eegnet_v4"):
         row = [MODEL_TEX[m]]
@@ -84,7 +84,7 @@ def main() -> int:
     lines = [r"\begin{table}", r"\caption{BCI-IV-2a (9 subjects, left- versus right-hand imagery): mean accuracy with the subject-bootstrap 95\,\% CI and paired per-subject differences. "
              r"Protocols: within = session-to-session inside each subject (both directions averaged; training fraction 1/2); P0a = trial-random 6-fold (5/6); P1 = run-disjoint subject-overlapping 6-fold (5/6); "
              r"P0b = trial-random 2-fold (1/2); P1s = session-disjoint subject-overlapping 2-fold (1/2); P2 = leave-one-subject-out (8/9). "
-             r"$p$: exact two-sided paired Wilcoxon test ($n=9$; the smallest attainable $p$ is 0.0039), Holm-adjusted within this table; $n_+$ = number of subjects with a positive difference.}",
+             r"$p$: exact conditional two-sided signed-rank test ($n=9$; zeros dropped, tied ranks averaged; the smallest attainable raw $p$ is 0.0039 when all nine differences are nonzero); $p_{\rm Holm}$: Holm-adjusted over the 24 contrasts displayed in this table, so no adjusted value can fall below 0.094; $n_+$ = number of subjects with a positive difference. Sign-flip permutation $p$-values are in the released statistics file.}",
              r"\label{tab:bci2a}", r"\centering", r"\footnotesize", r"\resizebox{\linewidth}{!}{%", r"\begin{tabular}{l c c c c c c}", r"\hline",
              r"Decoder & within & P0a & P1 & P0b & P1s & P2 (LOSO) \\", r"\hline"]
     for m in ("csp_lda", "riemann_ts_lr", "shallow_fbcsp", "eegnet_v4"):
@@ -116,15 +116,15 @@ def main() -> int:
     tost = C.read_csv(R / f"stats_{args.tag}_tost.csv") if (R / f"stats_{args.tag}_tost.csv").exists() else []
     prov.append(f"stats_{args.tag}_tost.csv")
     lines = [r"\begin{table}", r"\caption{Reference-mean tests for the tangent-space pipeline ($C$ = 1). Transductive reference: under the subject-disjoint protocol (EEGBCI 3-fold; BCI-IV-2a LOSO) the reference is estimated from training-subject covariances only or from training plus test covariances (label-free), classifier unchanged; $\Delta$ = transductive $-$ inductive per test subject. Target-subject-in-reference (EEGBCI, P0 trial-random 3-fold, one seed): for each test subject the reference is "
-             r"estimated with (R$_{\rm full}$) or without (R$_{-s}$) that subject's training-fold covariances while the classifier is trained on the same training trials; $\Delta_{\rm ref}$ = acc(R$_{\rm full}$) $-$ acc(R$_{-s}$) per subject. "
-             r"TOST: two one-sided tests against the pre-specified margin $\pm0.01$ (equivalence when the 90\,\% CI lies inside the margin). Per-paradigm rows use 109 subjects each; the pooled row uses all 436 subject-paradigm cells.}",
-             r"\label{tab:reference}", r"\centering", r"\footnotesize", r"\resizebox{\linewidth}{!}{%", r"\begin{tabular}{l c c c c c}", r"\hline",
-             r"Analysis & $n$ & mean $\Delta$ [95\,\% CI] & Wilcoxon $p$ & 90\,\% CI (TOST) & equivalent \\", r"\hline"]
+             r"estimated with (R$_{\rm full}$) or without (R$_{-s}$) that subject's training-fold covariances while the classifier is trained on the same training trials; $\Delta_{\rm ref}$ = acc(R$_{\rm full}$) $-$ acc(R$_{-s}$) per subject (inclusion minus exclusion; a positive value means that including the subject's own covariances in the reference helped). Each subject's value averages its three test folds weighted by the number of its test trials; the paradigm-mean row averages the four paradigms within each subject ($n$ = 109). "
+             r"TOST: two one-sided $t$-tests against the pre-specified margin $\pm0.01$ (equivalence when both one-sided $p$ < 0.05, i.e. the 90\,\% CI lies inside the margin).}",
+             r"\label{tab:reference}", r"\centering", r"\footnotesize", r"\resizebox{\linewidth}{!}{%", r"\begin{tabular}{l c c c c c c}", r"\hline",
+             r"Analysis & $n$ & mean $\Delta$ [95\,\% CI] & Wilcoxon $p$ & 90\,\% CI (TOST) & TOST $p_{\rm lower}$, $p_{\rm upper}$ & equivalent \\", r"\hline"]
     for r in tost:
-        name = C.TASK_SHORT.get(r["task"], r["task"].replace("_", " "))
+        name = {"paradigm_mean": "mean of the four paradigms"}.get(r["task"], C.TASK_SHORT.get(r["task"], r["task"].replace("_", " ")))
         label = "target subject in reference (P0), EEGBCI" if r["analysis"].startswith("e6") else ("transductive reference (LOSO), BCI-IV-2a" if r.get("dataset") == "bci2a" else "transductive reference (P2), EEGBCI")
         lines.append(f"{label}, {name} & {r['n']} & {cell(r['mean_delta'], r['ci_low'], r['ci_high'], nd=4, sign=True)} & {fp(float(r['p_wilcoxon']))} & "
-                     f"[{float(r['tost_ci90_low']):+.4f}, {float(r['tost_ci90_high']):+.4f}] & {'yes' if r['tost_equivalent'] in ('1', 'True', 'true') else 'no'} \\\\")
+                     f"[{float(r['tost_ci90_low']):+.4f}, {float(r['tost_ci90_high']):+.4f}] & {fp(float(r['tost_p_lower']))}, {fp(float(r['tost_p_upper']))} & {'yes' if r['tost_equivalent'] in ('1', 'True', 'true') else 'no'} \\\\")
     lines += [r"\hline", r"\end{tabular}}", r"\end{table}"]
     (OUT / "table3_reference.tex").write_text("\n".join(lines) + "\n")
 
@@ -184,8 +184,8 @@ def main() -> int:
     if p5.exists():
         prov.append(p5.name)
         rows = [r for r in C.read_csv(p5) if r["task"] == "paradigm_mean"]
-        lines = [r"\begin{table}", r"\caption{Classifiers applied to identical inductive tangent-space features (EEGBCI, paradigm mean, 109 subjects; MDM operates on the covariances). Paired per-subject differences with Holm-adjusted $p$ (family = this table).}",
-                 r"\label{tab:s_clf}", r"\centering", r"\small", r"\begin{tabular}{l c c c}", r"\hline", r"Classifier & $\Delta$(P1$-$P2) [CI]; $p_{\rm Holm}$ & $\Delta$(P0$-$P1) [CI]; $p_{\rm Holm}$ & $\Delta$(P0$-$P2) [CI]; $p_{\rm Holm}$ \\", r"\hline"]
+        lines = [r"\begin{table}", r"\caption{Classifiers applied to identical inductive tangent-space features (EEGBCI, paradigm mean, 109 subjects; MDM operates on the covariances). Paired per-subject differences with Holm-adjusted $p$ (one family = the 18 contrasts of this table).}",
+                 r"\label{tab:s_clf}", r"\centering", r"\footnotesize", r"\resizebox{\linewidth}{!}{%", r"\begin{tabular}{l c c c}", r"\hline", r"Classifier & $\Delta$(P1$-$P2) [CI]; $p_{\rm Holm}$ & $\Delta$(P0$-$P1) [CI]; $p_{\rm Holm}$ & $\Delta$(P0$-$P2) [CI]; $p_{\rm Holm}$ \\", r"\hline"]
         lab = {"lr": "$\\ell_2$ logistic regression ($C$ = 1)", "slda": "shrinkage LDA", "linsvm": "linear SVM ($C$ = 1)", "ridge": "ridge classifier ($\\alpha$ = 1)", "knn": "$k$-NN ($k$ = 5)", "mdm": "MDM (Riemannian class means)"}
         for c in ("lr", "slda", "linsvm", "ridge", "knn", "mdm"):
             row = [lab[c]]
@@ -193,7 +193,7 @@ def main() -> int:
                 r = [x for x in rows if x["clf"] == c and x["contrast"] == con]
                 row.append((cell(r[0]["mean_diff"], r[0]["ci_low"], r[0]["ci_high"], sign=True) + "; " + fp(float(r[0]["p_holm"]))) if r else "--")
             lines.append(" & ".join(row) + r" \\")
-        lines += [r"\hline", r"\end{tabular}", r"\end{table}"]
+        lines += [r"\hline", r"\end{tabular}}", r"\end{table}"]
         (OUT / "tableS_classifiers.tex").write_text("\n".join(lines) + "\n")
 
     # ------------------------------------------------------------- Supplementary: E3c mean removal
@@ -202,7 +202,7 @@ def main() -> int:
         prov.append(p3.name)
         rows = [r for r in C.read_csv(p3) if r["task"] == "paradigm_mean"]
         lines = [r"\begin{table}", r"\caption{TS+LR ($C$ = 1) after removing subject-level structure (EEGBCI, paradigm mean): per-subject feature-mean removal (each subject centred on its own mean over all its trials) and Riemannian recentering "
-                 r"($C_i \mapsto G_s^{-1/2} C_i G_s^{-1/2}$ with $G_s$ the subject's Fr\'echet mean). Paired differences with Holm-adjusted $p$.}", r"\label{tab:s_center}", r"\centering", r"\small", r"\begin{tabular}{l c c c}", r"\hline",
+                 r"($C_i \mapsto G_s^{-1/2} C_i G_s^{-1/2}$ with $G_s$ the subject's Fr\'echet mean); both use all of a subject's trials, including its test trials, and are therefore transductive diagnostics. Paired differences with Holm-adjusted $p$ (one family = the six contrasts of this table).}", r"\label{tab:s_center}", r"\centering", r"\footnotesize", r"\resizebox{\linewidth}{!}{%", r"\begin{tabular}{l c c c}", r"\hline",
                  r"Variant & $\Delta$(P1$-$P2) [CI]; $p_{\rm Holm}$ & $\Delta$(P0$-$P1) [CI]; $p_{\rm Holm}$ & $\Delta$(P0$-$P2) [CI]; $p_{\rm Holm}$ \\", r"\hline"]
         for v, lab_ in (("feature_centered", "subject feature-mean removed"), ("riemann_recentered", "Riemannian recentering")):
             row = [lab_]
@@ -210,7 +210,7 @@ def main() -> int:
                 r = [x for x in rows if x["variant"] == v and x["contrast"] == con]
                 row.append((cell(r[0]["mean_diff"], r[0]["ci_low"], r[0]["ci_high"], sign=True) + "; " + fp(float(r[0]["p_holm"]))) if r else "--")
             lines.append(" & ".join(row) + r" \\")
-        lines += [r"\hline", r"\end{tabular}", r"\end{table}"]
+        lines += [r"\hline", r"\end{tabular}}", r"\end{table}"]
         (OUT / "tableS_center.tex").write_text("\n".join(lines) + "\n")
 
     # ------------------------------------------------------------- Supplementary: E4 PCA sweep and E2 sweep (paradigm mean)
@@ -220,16 +220,16 @@ def main() -> int:
             continue
         prov.append(p.name)
         rows = [r for r in C.read_csv(p) if r["task"] == "paradigm_mean"]
-        lines = [r"\begin{table}", rf"\caption{{{capt} Mean accuracy [95\,\% CI] per protocol and the paired per-subject differences; the last row gives Spearman's $\rho$ of $\Delta$(P1$-$P2) against the swept variable.}}", rf"\label{{tab:s_{label}}}", r"\centering", r"\scriptsize",
-                 r"\begin{tabular}{l c c c c c}", r"\hline", f"${xkey}$ & P0 & P1 & P2 & $\\Delta$(P1$-$P2) [CI]; $p$ & $\\Delta$(P0$-$P2) [CI]; $p$ \\\\", r"\hline"]
+        lines = [r"\begin{table}", rf"\caption{{{capt} Mean accuracy [95\,\% CI] per protocol and the paired per-subject differences with Holm-adjusted $p$ (one family = all differences of this table); the last row gives Spearman's $\rho$ of $\Delta$(P1$-$P2) against the swept variable.}}", rf"\label{{tab:s_{label}}}", r"\centering", r"\scriptsize", r"\resizebox{\linewidth}{!}{%",
+                 r"\begin{tabular}{l c c c c c}", r"\hline", f"${xkey}$ & P0 & P1 & P2 & $\\Delta$(P1$-$P2) [CI]; $p_{{\\rm Holm}}$ & $\\Delta$(P0$-$P2) [CI]; $p_{{\\rm Holm}}$ \\\\", r"\hline"]
         for r in rows:
             if "acc_trial_random" in r and r["acc_trial_random"]:
                 lines.append(f"{float(r[xkey]):g} & {cell(r['acc_trial_random'], r['acc_trial_random_ci_low'], r['acc_trial_random_ci_high'])} & {cell(r['acc_run_disjoint'], r['acc_run_disjoint_ci_low'], r['acc_run_disjoint_ci_high'])} & "
-                             f"{cell(r['acc_subject_disjoint'], r['acc_subject_disjoint_ci_low'], r['acc_subject_disjoint_ci_high'])} & {cell(r['d12_mean'], r['d12_ci_low'], r['d12_ci_high'], sign=True)}; {fp(float(r['d12_p']))} & "
-                             f"{cell(r['d02_mean'], r['d02_ci_low'], r['d02_ci_high'], sign=True)}; {fp(float(r['d02_p']))} \\\\")
+                             f"{cell(r['acc_subject_disjoint'], r['acc_subject_disjoint_ci_low'], r['acc_subject_disjoint_ci_high'])} & {cell(r['d12_mean'], r['d12_ci_low'], r['d12_ci_high'], sign=True)}; {fp(float(r.get('d12_p_holm') or r['d12_p']))} & "
+                             f"{cell(r['d02_mean'], r['d02_ci_low'], r['d02_ci_high'], sign=True)}; {fp(float(r.get('d02_p_holm') or r['d02_p']))} \\\\")
             else:
                 lines.append(rf"\multicolumn{{6}}{{l}}{{Spearman $\rho$($\Delta$(P1$-$P2), {xkey}) = {float(r['d12_mean']):.3f}, $p$ = {fp(float(r['d12_p']))} ($n$ = {r['n']} levels)}} \\")
-        lines += [r"\hline", r"\end{tabular}", r"\end{table}"]
+        lines += [r"\hline", r"\end{tabular}}", r"\end{table}"]
         (OUT / f"tableS_{label}.tex").write_text("\n".join(lines) + "\n")
 
     # ------------------------------------------------------------- Supplementary: E7 width, E8 factorial
@@ -237,13 +237,13 @@ def main() -> int:
     if p7.exists():
         prov.append(p7.name)
         rows = [r for r in C.read_csv(p7) if r["task"] == "paradigm_mean"]
-        lines = [r"\begin{table}", r"\caption{Network-width sweeps (EEGBCI, paradigm mean, one seed): trainable parameters, accuracy under P0 and P2, the paired difference and the mean train--test gap over folds.}", r"\label{tab:s_width}", r"\centering", r"\scriptsize", r"\resizebox{\linewidth}{!}{%",
-                 r"\begin{tabular}{l l r c c c c c}", r"\hline", r"Network & width & parameters & P0 & P2 & $\Delta$(P0$-$P2) [CI]; $p$ & gap P0 & gap P2 \\", r"\hline"]
+        lines = [r"\begin{table}", r"\caption{Network-width sweeps (EEGBCI, paradigm mean, one seed): trainable parameters, accuracy under P0 and P2, the paired per-subject difference (Holm-adjusted over the ten width cells of this table) and the mean train--test gap over folds.}", r"\label{tab:s_width}", r"\centering", r"\scriptsize", r"\resizebox{\linewidth}{!}{%",
+                 r"\begin{tabular}{l l r c c c c c}", r"\hline", r"Network & width & parameters & P0 & P2 & $\Delta$(P0$-$P2) [CI]; $p_{\rm Holm}$ (10 tests) & gap P0 & gap P2 \\", r"\hline"]
         for r in rows:
             if r["width"].startswith("spearman"):
                 lines.append(rf"\multicolumn{{8}}{{l}}{{{MODEL_TEX.get(r['model'], r['model'])}: Spearman $\rho$($\Delta$(P0$-$P2), width) = {float(r['d02_mean']):.3f}, $p$ = {fp(float(r['d02_p']))}}} \\")
             else:
-                lines.append(f"{MODEL_TEX.get(r['model'], r['model'])} & {r['width']} & {int(r['n_params']) if r['n_params'] else '--'} & {float(r['acc_P0']):.3f} & {float(r['acc_P2']):.3f} & {cell(r['d02_mean'], r['d02_ci_low'], r['d02_ci_high'], sign=True)}; {fp(float(r['d02_p']))} & "
+                lines.append(f"{MODEL_TEX.get(r['model'], r['model'])} & {r['width']} & {int(r['n_params']) if r['n_params'] else '--'} & {float(r['acc_P0']):.3f} & {float(r['acc_P2']):.3f} & {cell(r['d02_mean'], r['d02_ci_low'], r['d02_ci_high'], sign=True)}; {fp(float(r.get('d02_p_holm') or r['d02_p']))} & "
                              f"{float(r['train_test_gap_P0']):+.3f} & {float(r['train_test_gap_P2']):+.3f} \\\\")
         lines += [r"\hline", r"\end{tabular}}", r"\end{table}"]
         (OUT / "tableS_width.tex").write_text("\n".join(lines) + "\n")
@@ -251,16 +251,18 @@ def main() -> int:
     if p8.exists():
         prov.append(p8.name)
         rows = C.read_csv(p8)
-        lines = [r"\begin{table}", r"\caption{Within-dataset factorial (EEGBCI): mean $\Delta$(P0$-$P2) of TS+LR ($C$ = 1) over 10 random draws of $N$ training subjects (1 draw for $N$ = 109) and $d$ principal components, per paradigm, with draw-bootstrap 95\,\% CI; "
-                 r"and the descriptive OLS of $\Delta$ on $\log_2 N$, $\log_2 d$ and their interaction (draw-bootstrap CIs).}", r"\label{tab:s_factorial}", r"\centering", r"\scriptsize", r"\begin{tabular}{l l r r c}", r"\hline", r"Paradigm & model & $N$ & $d$ & $\Delta$(P0$-$P2) [CI] \\", r"\hline"]
+        lines = [r"\begin{center}", r"\scriptsize", r"\begin{longtable}{l l r r c}",
+                 r"\caption{Within-dataset factorial (EEGBCI): mean $\Delta$(P0$-$P2) of TS+LR ($C$ = 1) over 10 random draws of $N$ sampled subjects (1 draw for $N$ = 109; P2 trains on about $2N/3$ of them) and $d$ principal components, per paradigm, with draw-bootstrap 95\,\% CI (single-draw cells have no CI); "
+                 r"the cell $N$ = 9, $d$ = 512 is not feasible (fewer training trials than components). OLS rows: descriptive least-squares fit of the draw-level $\Delta$ on $\log_2 N$ and $\log_2 d$ centred at the grid means, with their product; CIs from a bootstrap that resamples whole draws (all $d$ cells of a draw together).\label{tab:s_factorial}}\\",
+                 r"\hline", r"Paradigm & model & $N$ & $d$ & $\Delta$(P0$-$P2) [CI] \\", r"\hline", r"\endfirsthead", r"\hline", r"Paradigm & model & $N$ & $d$ & $\Delta$(P0$-$P2) [CI] \\", r"\hline", r"\endhead"]
         for r in rows:
             if r["N"] == "ols":
-                nm = {"intercept": "intercept", "log2N": "$\\log_2 N$", "log2d": "$\\log_2 d$", "log2N_x_log2d": "$\\log_2 N \\times \\log_2 d$"}.get(r["d"], r["d"])
+                nm = {"intercept_at_grid_centre": "intercept (grid centre)", "intercept": "intercept", "log2N": "$\\log_2 N$ (per doubling)", "log2d": "$\\log_2 d$ (per doubling)", "log2N_x_log2d": "$\\log_2 N \\times \\log_2 d$"}.get(r["d"], r["d"])
                 lines.append(f"{C.TASK_SHORT.get(r['task'], r['task'])} & OLS slope & \\multicolumn{{2}}{{l}}{{{nm}}} & {cell(r['inflation_mean'], r['ci_low'], r['ci_high'], sign=True)} \\\\")
             else:
                 val = cell(r['inflation_mean'], r['ci_low'], r['ci_high'], sign=True) if r['ci_low'] not in ('nan', '') else f"{float(r['inflation_mean']):+.3f} (single draw)"
                 lines.append(f"{C.TASK_SHORT.get(r['task'], r['task'])} & {MODEL_TEX.get(r['model'], r['model'])} & {r['N']} & {r['d']} & {val} \\\\")
-        lines += [r"\hline", r"\end{tabular}", r"\end{table}"]
+        lines += [r"\hline", r"\end{longtable}", r"\end{center}"]
         (OUT / "tableS_factorial.tex").write_text("\n".join(lines) + "\n")
 
     # ------------------------------------------------------------- Supplementary: E15 exploratory stratification
@@ -307,7 +309,7 @@ def main() -> int:
     if p12.exists():
         prov.append(p12.name)
         rows = C.read_csv(p12)
-        lines = [r"\begin{table}", r"\caption{Calibration-size curve on the two imagery paradigms of EEGBCI (mean over both; 109 test subjects, evaluated on each subject's third run): accuracy of a subject-disjoint model after appending $k$ labelled trials of the test subject (CSP+LDA and TS+LR refitted; EEGNet fine-tuned for 20 epochs; three draws averaged), the paired difference to $k = 0$ with Holm-adjusted $p$ (family = one decoder), and the within-subject and subject-disjoint (P2) accuracies of the same decoders on the same paradigms.}",
+        lines = [r"\begin{table}", r"\caption{Calibration-size curve on the two imagery paradigms of EEGBCI (mean over both; 109 test subjects, evaluated on each subject's third run): accuracy of a subject-disjoint model after appending $k$ labelled trials of the test subject (CSP+LDA and TS+LR refitted; EEGNet fine-tuned for 20 epochs; three draws averaged), the paired difference to $k = 0$ with exact/asymptotic Wilcoxon $p$ Holm-adjusted over the 12 contrasts of this table, and the within-subject and subject-disjoint (P2) accuracies of the same decoders on the same paradigms.}",
                  r"\label{tab:s_calib}", r"\centering", r"\footnotesize", r"\resizebox{\linewidth}{!}{%", r"\begin{tabular}{l l c c}", r"\hline", r"Decoder & $k$ & accuracy [95\,\% CI] & $\Delta$ vs $k = 0$ [CI]; $p_{\rm Holm}$ \\", r"\hline"]
         for r in rows:
             kk = {"ref_within_subject": "within-subject reference", "ref_subject_disjoint": "subject-disjoint (P2) reference"}.get(r["k"], r["k"])

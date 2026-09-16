@@ -1,7 +1,7 @@
 {
   "run_id": "e5_rev1",
   "command": "test/experiments/revision/e5_classifiers.py --n-seeds 5 --n-jobs 36 --tag rev1",
-  "cwd": "<repo-root>",
+  "cwd": "/home/wjeong/bf",
   "git_head": "489586d235708048756790acd21570a0da57958b",
   "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
   "versions": {

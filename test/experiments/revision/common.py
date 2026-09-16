@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared code for the revision analyses (REVISION_PLAN_v1.md).
+"""Shared code for the JNE-revision analyses (REVISION_PLAN_v1.md).
 
 Everything here is deterministic given the seeds in the plan. No modelling
 decision is made in this module; it provides loaders, split constructors that
@@ -273,24 +273,61 @@ def bootstrap_ci(values, n: int = BOOT_N, seed: int = SEED) -> tuple[float, floa
     return float(np.percentile(means, 2.5)), float(np.percentile(means, 97.5))
 
 
+ROUND_DECIMALS = 12  # differences are rounded before ranking so that mathematically tied CSV values stay tied
+
+
+def _exact_signed_rank_p(d: np.ndarray) -> tuple[float, float]:
+    """Exact conditional signed-rank test (two-sided): zeros dropped, ties get average ranks, and the null
+    distribution is the enumeration of all 2^n sign assignments on the OBSERVED rank vector (n <= 25)."""
+    from scipy.stats import rankdata
+
+    d = d[d != 0]
+    n = len(d)
+    if n == 0:
+        return 0.0, 1.0
+    r = rankdata(np.abs(d))
+    w_plus = float(np.sum(r[d > 0]))
+    total = float(np.sum(r))
+    # distribution of W+ over all sign assignments via dynamic programming on (scaled) integer ranks
+    scale = 2  # average ranks are multiples of 0.5
+    ri = np.round(r * scale).astype(int)
+    dist = np.zeros(int(np.sum(ri)) + 1)
+    dist[0] = 1.0
+    for x in ri:
+        new_dist = dist.copy()
+        new_dist[x:] += dist[: len(dist) - x]
+        dist = new_dist
+    dist /= dist.sum()
+    w_int = int(round(w_plus * scale))
+    mean_int = np.sum(ri) / 2.0
+    dev = abs(w_int - mean_int)
+    lo = int(np.floor(mean_int - dev + 1e-9)); hi = int(np.ceil(mean_int + dev - 1e-9))
+    p = float(dist[: max(lo, 0) + 1].sum() + dist[hi:].sum()) if lo <= hi else 1.0
+    p = min(1.0, p)
+    return min(w_plus, total - w_plus), p
+
+
 def wilcoxon_paired(a, b) -> tuple[float, float]:
     from scipy.stats import wilcoxon
 
     a = np.asarray(a, dtype=float)
     b = np.asarray(b, dtype=float)
-    d = a - b
-    if np.allclose(d, 0):
+    d = np.round(a - b, ROUND_DECIMALS)
+    if np.all(d == 0):
         return 0.0, 1.0
-    method = "exact" if len(d) <= 25 else "auto"
-    try:
-        res = wilcoxon(a, b, method=method)
-    except ValueError:
-        res = wilcoxon(a, b)
+    if len(d) <= 25:
+        return _exact_signed_rank_p(d)
+    res = wilcoxon(d, method="auto")
     return float(res.statistic), float(res.pvalue)
 
 
+def exact_floor_p(n_nonzero: int) -> float:
+    """Smallest attainable two-sided exact p for n nonzero, untied differences."""
+    return 2.0 / (2 ** n_nonzero) if n_nonzero > 0 else 1.0
+
+
 def signflip_perm_p(d, n_perm: int = N_PERM, seed: int = SEED) -> float:
-    d = np.asarray(d, dtype=float)
+    d = np.round(np.asarray(d, dtype=float), ROUND_DECIMALS)
     d = d[~np.isnan(d)]
     if len(d) == 0:
         return float("nan")
@@ -382,9 +419,13 @@ def write_csv(path: Path, rows: list[dict], fieldnames: list[str] | None = None)
     if not rows:
         raise RuntimeError(f"refusing to write an empty table: {path}")
     if fieldnames is None:
-        fieldnames = list(rows[0].keys())
+        fieldnames = []
+        for r in rows:  # union of keys in order of first appearance (rows may gain columns, e.g. Holm-adjusted p)
+            for k in r:
+                if k not in fieldnames:
+                    fieldnames.append(k)
     with path.open("w", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=fieldnames)
+        w = csv.DictWriter(fh, fieldnames=fieldnames, restval="")
         w.writeheader()
         w.writerows(rows)
     return path

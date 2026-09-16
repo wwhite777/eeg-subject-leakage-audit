@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Statistics and aggregation for the revision analyses (plan B2, C1–C8).
+"""Statistics and aggregation for the JNE-revision analyses (plan B2, C1–C8).
 
 Reads the per-subject CSVs written by e1..e12 (by tag) and writes:
   stats_<tag>_ladder_means.csv     mean accuracy per (dataset, task/paradigm-average, model, protocol) with
@@ -60,7 +60,7 @@ def contrast(subj_a: dict[int, float], subj_b: dict[int, float], seed=C.SEED) ->
 
 def by_group(subj_acc: dict, prefix: tuple) -> dict[int, float]:
     n = len(prefix)
-    return {k[n]: v for k, v in subj_acc.items() if k[:n] == prefix}
+    return {k[n]: v for k, v in sorted(subj_acc.items(), key=lambda kv: kv[0]) if k[:n] == prefix}
 
 
 def main() -> int:
@@ -131,6 +131,13 @@ def main() -> int:
                        ("trial_random_2", "session_disjoint", "run_session_component"), ("session_disjoint", "loso", "subject_overlap_component_session"),
                        ("trial_random_6", "loso", "delta_leak_original_definition"), ("within_session", "loso", "calibration_gap"),
                        ("subject_disjoint_5", "loso", "groupkfold5_vs_loso")]
+        # Holm families = the displayed tables (plan B2): Table 3 = EEGBCI paradigm-mean rows of the four base decoders x
+        # {subject_overlap, run_temporal, calibration_gap}; Table 4 = BCI-IV-2a rows x the six displayed contrasts (the
+        # GroupKFold5-vs-LOSO comparison is descriptive and reported raw); Table S8 = the preprocessing controls; per-paradigm
+        # rows of Table S1 form one family per paradigm. Contrasts that appear in no table (delta_leak_original_definition
+        # on EEGBCI) are reported with raw p only and family "none".
+        displayed_eegbci = {"subject_overlap_component", "run_temporal_component", "calibration_gap"}
+        displayed_bci2a = {"subject_overlap_component_run", "run_temporal_component", "subject_overlap_component_session", "run_session_component", "delta_leak_original_definition", "calibration_gap"}
         fam = defaultdict(list)
         for g in groups:
             dataset, task, model, protocol = g
@@ -144,18 +151,29 @@ def main() -> int:
                     continue
                 c = contrast(A, B)
                 row = {"dataset": dataset, "task": task, "model": model, "contrast": name, "protocol_a": pa, "protocol_b": pb, **{k: (C.fmt(v) if isinstance(v, float) else v) for k, v in c.items()}}
-                fam[(dataset, task)].append((row, c["p_wilcoxon"]))
-        for (dataset, task), items in fam.items():
-            adj = C.holm([p for _, p in items])
+                control = model.endswith("_ztrial") or model.endswith("_globalscale")
+                if dataset == "eegbci" and task == "paradigm_mean" and name in displayed_eegbci:
+                    key = "tableS8_preprocessing_control" if control else "table3_eegbci"
+                elif dataset == "eegbci" and task != "paradigm_mean" and name in displayed_eegbci and not control:
+                    key = f"tableS1_{task}"
+                elif dataset == "bci2a" and name in displayed_bci2a:
+                    key = "table4_bci2a"
+                else:
+                    key = "none"
+                fam[key].append((row, c["p_wilcoxon"]))
+        for key, items in fam.items():
+            adj = C.holm([p for _, p in items]) if key != "none" else [float("nan")] * len(items)
             for (row, _), pa in zip(items, adj):
-                row["p_holm"] = C.fmt(pa)
-                row["family"] = f"{dataset}/{task}"
+                row["p_holm"] = C.fmt(pa) if pa == pa else ""
+                row["family"] = key
+                row["family_size"] = len(items) if key != "none" else ""
                 contrast_rows.append(row)
         outputs.append(C.write_csv(R / f"stats_{args.tag}_ladder_means.csv", means_rows))
         outputs.append(C.write_csv(R / f"stats_{args.tag}_contrasts.csv", contrast_rows))
         for r in contrast_rows:
             if r["task"] in ("paradigm_mean", "bci2a_left_right"):
-                print(f"  {r['dataset']:6s} {r['model']:26s} {r['contrast']:34s} Δ={float(r['mean_diff']):+.4f} CI[{float(r['ci_low']):+.4f},{float(r['ci_high']):+.4f}] p={float(r['p_wilcoxon']):.2e} holm={float(r['p_holm']):.2e} n={r['n']}")
+                ph = f"{float(r['p_holm']):.2e}" if r['p_holm'] else "n/a"
+                print(f"  {r['dataset']:6s} {r['model']:26s} {r['contrast']:34s} Δ={float(r['mean_diff']):+.4f} CI[{float(r['ci_low']):+.4f},{float(r['ci_high']):+.4f}] p={float(r['p_wilcoxon']):.2e} holm={ph} [{r['family']}] n={r['n']}")
 
     # ------------------------------------------------------------------ E3c and E5 contrasts (same machinery, extra key)
     for path, key, label in ((args.e3c, "variant", "e3c"), (args.e5, "clf", "e5")):
@@ -182,6 +200,8 @@ def main() -> int:
         for (task,), items in fam.items():
             for (row, _), pa in zip(items, C.holm([p for _, p in items])):
                 row["p_holm"] = C.fmt(pa)
+                row["family"] = f"{label}_{task}"
+                row["family_size"] = len(items)
                 out.append(row)
         outputs.append(C.write_csv(R / f"stats_{args.tag}_{label}_contrasts.csv", out))
         for r in out:
@@ -194,17 +214,27 @@ def main() -> int:
         if not path:
             continue
         rr = C.read_csv(Path(path))
-        # unit = subject: when a subject appears in several folds (E6), average its delta over folds first
+        # unit = subject: when a subject appears in several folds (E6), average its delta over folds WEIGHTED by the
+        # number of its test trials in each fold; the pooled row averages the four paradigms within each subject (n = 109)
         per_cell = defaultdict(list)
         for r in rr:
-            per_cell[(r.get("dataset", "eegbci"), r["task"], int(r["subject"]))].append(float(r["delta"]))
-        per_task = defaultdict(list)
+            w = float(r.get("n_test", 1) or 1)
+            per_cell[(r.get("dataset", "eegbci"), r["task"], int(r["subject"]))].append((float(r["delta"]), w))
+        per_subj = {}
         for (dataset, task, subject), v in per_cell.items():
-            per_task[(dataset, task)].append(float(np.mean(v)))
-        allv = []
-        for (dataset, task), d in per_task.items():
+            d = np.array([x for x, _ in v]); w = np.array([x for _, x in v])
+            per_subj[(dataset, task, subject)] = float(np.sum(d * w) / np.sum(w))
+        per_task = defaultdict(dict)
+        for (dataset, task, subject), v in per_subj.items():
+            per_task[(dataset, task)][subject] = v
+        pooled = defaultdict(list)
+        for (dataset, task), dd in per_task.items():
             if dataset == "eegbci":
-                allv.extend(d)
+                for subject, v in dd.items():
+                    pooled[subject].append(v)
+        allv = [float(np.mean(v)) for subject, v in sorted(pooled.items()) if len(v) == len([k for k in per_task if k[0] == "eegbci"])]
+        for (dataset, task), dd in per_task.items():
+            d = [dd[k] for k in sorted(dd)]
             t = C.tost(np.array(d))
             lo, hi = C.bootstrap_ci(np.array(d))
             W, p = C.wilcoxon_paired(np.array(d), np.zeros(len(d)))
@@ -213,7 +243,7 @@ def main() -> int:
         if allv:
             t = C.tost(np.array(allv))
             lo, hi = C.bootstrap_ci(np.array(allv))
-            out.append({"analysis": label, "dataset": "eegbci", "task": "all_paradigms_pooled", "n": len(allv), "mean_delta": C.fmt(np.mean(allv)), "ci_low": C.fmt(lo), "ci_high": C.fmt(hi),
+            out.append({"analysis": label, "dataset": "eegbci", "task": "paradigm_mean", "n": len(allv), "mean_delta": C.fmt(np.mean(allv)), "ci_low": C.fmt(lo), "ci_high": C.fmt(hi),
                         "p_wilcoxon": C.fmt(C.wilcoxon_paired(np.array(allv), np.zeros(len(allv)))[1]), **{f"tost_{k}": C.fmt(v) for k, v in t.items()}})
     if out:
         outputs.append(C.write_csv(R / f"stats_{args.tag}_tost.csv", out))
@@ -258,6 +288,13 @@ def main() -> int:
             if len(d12_means) >= 3:
                 rho, p = spearmanr(xs[: len(d12_means)], d12_means)
                 out.append({"task": task, xkey: "spearman_d12_vs_x", "d12_mean": C.fmt(rho), "d12_p": C.fmt(p), "n": len(d12_means)})
+        # Holm within the displayed sweep table (paradigm-mean rows: all d12 and d02 tests of that table)
+        pm_rows = [r for r in out if r["task"] == "paradigm_mean" and "d12_p" in r and "d02_p" in r and r.get("acc_trial_random")]
+        if pm_rows:
+            ps = [float(r["d12_p"]) for r in pm_rows] + [float(r["d02_p"]) for r in pm_rows]
+            adj = C.holm(ps)
+            for i, r in enumerate(pm_rows):
+                r["d12_p_holm"] = C.fmt(adj[i]); r["d02_p_holm"] = C.fmt(adj[len(pm_rows) + i]); r["family_size"] = len(ps)
         outputs.append(C.write_csv(R / f"stats_{args.tag}_{label}_sweep.csv", out))
         for r in out:
             if r["task"] == "paradigm_mean":
@@ -280,23 +317,37 @@ def main() -> int:
             lo, hi = C.bootstrap_ci(v) if len(v) > 1 else (float("nan"), float("nan"))
             out.append({"task": task, "model": model, "N": N, "d": d, "n_draws": len(v), "inflation_mean": C.fmt(v.mean()), "ci_low": C.fmt(lo), "ci_high": C.fmt(hi), "sd": C.fmt(v.std(ddof=1)) if len(v) > 1 else ""})
         # OLS on log2 N, log2 d (TS+LR), draw-bootstrap CI on coefficients
+        N_LEVELS = sorted({k[2] for k in infl if k[1] == "riemann_ts_lr"}); D_LEVELS = sorted({k[3] for k in infl if k[1] == "riemann_ts_lr"})
+        draw_of = defaultdict(list)  # (task, model, N, d) -> list of draw ids aligned with infl values
+        for (task, model, N, d, draw), vals in cells.items():
+            p = dict(vals)
+            if "trial_random" in p and "subject_disjoint" in p:
+                draw_of[(task, model, N, d)].append(draw)
         for task in sorted({k[0] for k in infl}):
-            X, Y = [], []
+            X, Y, CL = [], [], []
             for (t, model, N, d), v in infl.items():
                 if t == task and model == "riemann_ts_lr":
-                    for val in v:
+                    for val, draw in zip(v, draw_of[(t, model, N, d)]):
                         X.append([1.0, np.log2(N), np.log2(d), np.log2(N) * np.log2(d)])
                         Y.append(val)
+                        CL.append(f"{N}_{draw}")
             if len(Y) > 8:
                 X, Y = np.array(X), np.array(Y)
+                # centre log2 N and log2 d at the grid means so that the main coefficients are slopes at the grid centre
+                cN, cd = np.mean(np.log2(np.array(N_LEVELS))), np.mean(np.log2(np.array(D_LEVELS)))
+                X = np.column_stack([X[:, 0], X[:, 1] - cN, X[:, 2] - cd, (X[:, 1] - cN) * (X[:, 2] - cd)])
                 beta = np.linalg.lstsq(X, Y, rcond=None)[0]
+                # draw-cluster bootstrap: a draw (its subject subset) is resampled with all of its d cells together
                 rng = np.random.default_rng(C.SEED)
+                clusters = np.array(CL)
+                uniq = sorted(set(clusters))
                 boots = []
                 for _ in range(2000):
-                    idx = rng.integers(0, len(Y), len(Y))
+                    pick = rng.choice(uniq, size=len(uniq), replace=True)
+                    idx = np.concatenate([np.where(clusters == u)[0] for u in pick])
                     boots.append(np.linalg.lstsq(X[idx], Y[idx], rcond=None)[0])
                 boots = np.array(boots)
-                for name, j in (("intercept", 0), ("log2N", 1), ("log2d", 2), ("log2N_x_log2d", 3)):
+                for name, j in (("intercept_at_grid_centre", 0), ("log2N", 1), ("log2d", 2), ("log2N_x_log2d", 3)):
                     out.append({"task": task, "model": "riemann_ts_lr", "N": "ols", "d": name, "n_draws": len(Y), "inflation_mean": C.fmt(beta[j]),
                                 "ci_low": C.fmt(np.percentile(boots[:, j], 2.5)), "ci_high": C.fmt(np.percentile(boots[:, j], 97.5)), "sd": ""})
         outputs.append(C.write_csv(R / f"stats_{args.tag}_factorial.csv", out))
@@ -345,6 +396,11 @@ def main() -> int:
                 if len(ds) >= 3:
                     rho, p = spearmanr(widths[: len(ds)], ds)
                     out.append({"task": task, "model": model, "width": "spearman_d02_vs_width", "d02_mean": C.fmt(rho), "d02_p": C.fmt(p), "n": len(ds)})
+        pm_rows = [r for r in out if r["task"] == "paradigm_mean" and not str(r["width"]).startswith("spearman")]
+        if pm_rows:
+            adj = C.holm([float(r["d02_p"]) for r in pm_rows])
+            for r, a in zip(pm_rows, adj):
+                r["d02_p_holm"] = C.fmt(a); r["family_size"] = len(pm_rows)
         outputs.append(C.write_csv(R / f"stats_{args.tag}_width.csv", out))
         for r in out:
             if r["task"] == "paradigm_mean":

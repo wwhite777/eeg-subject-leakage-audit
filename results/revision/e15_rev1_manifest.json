@@ -1,8 +1,8 @@
 {
   "run_id": "e15_rev1",
   "command": "test/experiments/revision/e15_stratification_artifact.py --tag rev1",
-  "cwd": "<repo-root>",
-  "git_head": "489586d235708048756790acd21570a0da57958b",
+  "cwd": "/home/wjeong/bf",
+  "git_head": "b75bce0e030c6edb74b63e11cf12f44eb734a15b",
   "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
   "versions": {
     "python": "3.12.12",
@@ -17,11 +17,12 @@
     "torch": "2.10.0+cu128"
   },
   "hostname": "user",
-  "started_utc": "2026-09-16T05:09:07Z",
-  "finished_utc": "2026-09-16T05:09:32Z",
+  "started_utc": "2026-09-16T10:41:47Z",
+  "finished_utc": "2026-09-16T10:42:11Z",
   "outputs": {
     "results/revision/e15_rev1_per_subject.csv": "cfc0cb3b2ec6f5f51c80f00299c1c42ebf829a7c44e67ce00a41a823a3591bc0",
-    "results/revision/e15_rev1_summary.csv": "a8130d0b34ba137dde1518a8903847d4a91106b9a57d62609392352a02e0772c"
+    "results/revision/e15_rev1_summary.csv": "a8130d0b34ba137dde1518a8903847d4a91106b9a57d62609392352a02e0772c",
+    "results/revision/e15_rev1_per_cell.csv": "0d541e390dc7eea07eb6ea6391d2a8333f14b194b1af1b5fbe3e530efe00f0fb"
   },
   "args": {
     "tasks": "imagery_left_right_fist,real_left_right_fist,imagery_fists_feet,real_fists_feet",

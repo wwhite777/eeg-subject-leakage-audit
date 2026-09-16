@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deep-network helpers for the revision analyses (plan B4, B10, B13, B14, B15).
+"""Deep-network helpers for the JNE-revision analyses (plan B4, B10, B13, B14, B15).
 
 EEGNet-v4 and ShallowFBCSPNet from braindecode, trained with Adam (lr 1e-3),
 cross-entropy, batch 64, at most `epochs` epochs, early stopping on validation

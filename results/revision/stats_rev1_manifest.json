@@ -1,8 +1,8 @@
 {
   "run_id": "stats_rev1",
   "command": "test/experiments/revision/e_stats.py --tag rev1 --e1-eegbci results/revision/e1_eegbci_rev1_per_subject.csv --e1-bci2a results/revision/e1_bci2a_rev1_per_subject.csv --e9 results/revision/e9_rev1_all_per_subject.csv --e11 results/revision/e11_rev1_all_per_subject.csv --e10 results/revision/e10_rev1_per_subject.csv --e2 results/revision/e2_rev1_per_subject.csv --e4 results/revision/e4_rev1_per_subject.csv --e5 results/revision/e5_rev1_per_subject.csv --e3c results/revision/e3c_rev1_per_subject.csv --e6 results/revision/e6_rev1_per_subject.csv --e14 results/revision/e14_rev1_per_subject.csv --e7 results/revision/e7_rev1_width_all_per_subject.csv --e8 results/revision/e8_rev1_per_draw.csv --e13-classical results/revision/e1_eegbci_rev1_ztrial_per_subject.csv --e13-deep results/revision/e9_rev1_global_all_per_subject.csv",
-  "cwd": "<repo-root>",
-  "git_head": "a8856e8c73e449ea2413b6060109a65aa55125a6",
+  "cwd": "/home/wjeong/bf",
+  "git_head": "b75bce0e030c6edb74b63e11cf12f44eb734a15b",
   "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
   "versions": {
     "python": "3.12.12",
@@ -17,18 +17,18 @@
     "torch": "2.10.0+cu128"
   },
   "hostname": "user",
-  "started_utc": "2026-09-16T09:00:00Z",
-  "finished_utc": "2026-09-16T09:00:14Z",
+  "started_utc": "2026-09-16T10:48:46Z",
+  "finished_utc": "2026-09-16T10:49:00Z",
   "outputs": {
     "results/revision/stats_rev1_ladder_means.csv": "0b65d647dec84450f7d27a5e21a8375bd94081baeb47aa772945712124aa9555",
-    "results/revision/stats_rev1_contrasts.csv": "2b7915b851f39d3712a9c33ff5f70f98067b40988272c5298aa93086bd7e1c09",
-    "results/revision/stats_rev1_e3c_contrasts.csv": "b76edabc7d792fce4c974273f043159e11f42f2ab4b394d445db90031ef8481d",
-    "results/revision/stats_rev1_e5_contrasts.csv": "ab746bb7c3e6367b27df9a6911afdbe96a51cc04f1cf6b166699e1c0502e4a78",
-    "results/revision/stats_rev1_tost.csv": "aaa31ff8124cb1ba9af53f08d6d4861b28e608849f699a65130ab25c3a9ca976",
-    "results/revision/stats_rev1_e2_sweep.csv": "544d66596671c278870f68af1260580f3070a2607dfe04a13be7b6e38d44d79b",
-    "results/revision/stats_rev1_e4_sweep.csv": "f1c6b75ef0d7df04659e8152574b6891bb39feef8e48d00fd3e496522279860a",
-    "results/revision/stats_rev1_factorial.csv": "695eb7e1354df83fa412597b37ff92c9c20833d75e580bca7671ddb9d6091db4",
-    "results/revision/stats_rev1_width.csv": "c6aede497094e5ec0220c0937a9ad17f8cd38b5a66558dbbec97af37e84a3571"
+    "results/revision/stats_rev1_contrasts.csv": "3bef2f2f094bf35984ffb85fbd47641a08d0e335245746f6e521f20cf72b115d",
+    "results/revision/stats_rev1_e3c_contrasts.csv": "2245c5f266cbaa9bf68566cab530afa9cde513c1daeb7a46618cdc4b2c0d19e1",
+    "results/revision/stats_rev1_e5_contrasts.csv": "818d6b5adef648752e24c1dbdbe754b7c9d77d813ac3430362dd1d67f26ac228",
+    "results/revision/stats_rev1_tost.csv": "465c6773646299d44badf4199323c80143559c1477c215f9d46a147081242e60",
+    "results/revision/stats_rev1_e2_sweep.csv": "ed61c57bff2695aed2966ebd0eb1662fe633d77c8925962cdbf49660ec478122",
+    "results/revision/stats_rev1_e4_sweep.csv": "574d202f8dfce6b970d108562346867202415204684d95abcc1321ec8df87ca2",
+    "results/revision/stats_rev1_factorial.csv": "78bdc141ff6fd841baf52ba4b37620c02a99ebb5482ac8a54b6de69f2a8db10d",
+    "results/revision/stats_rev1_width.csv": "32bee516a78a24cabb0b42c4b5e3376cff6b9ea1a7b11df5a5996aa6d55cd929"
   },
   "args": {
     "tag": "rev1",

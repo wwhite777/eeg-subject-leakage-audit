@@ -34,7 +34,7 @@ def main() -> int:
     args = ap.parse_args()
     started = C.utc_now()
     tag = args.tag or C.stamp()
-    rows, summ = [], []
+    rows, summ, cell_rows = [], [], []
     for task in [t for t in args.tasks.split(",") if t]:
         data = C.load_eegbci_task(task)
         y, subject = data["y"], data["subject"]
@@ -68,6 +68,8 @@ def main() -> int:
                         m_te = te[subject[te] == s]
                         if len(m_tr) and len(m_te):
                             cells_tr.append(np.mean(y[m_tr])); cells_te.append(np.mean(y[m_te]))
+                            cell_rows.append({"task": task, "protocol": protocol, "seed": seed, "fold": fold, "subject": int(s), "n_train_subject": len(m_tr), "n_test_subject": len(m_te),
+                                              "train_class1_fraction": C.fmt(np.mean(y[m_tr])), "test_class1_fraction": C.fmt(np.mean(y[m_te]))})
                 corr = float(np.corrcoef(cells_tr, cells_te)[0, 1]) if len(cells_tr) > 2 else float("nan")
                 lo, hi = C.bootstrap_ci(a)
                 summ.append({"task": task, "protocol": protocol, "seed": seed, "n_subjects": len(a), "subject_prior_accuracy_mean": C.fmt(a.mean()), "ci_low": C.fmt(lo), "ci_high": C.fmt(hi),
@@ -75,7 +77,8 @@ def main() -> int:
                 print(f"[{task}] {protocol:16s} seed={seed} subject-prior acc={a.mean():.4f} [{lo:.4f},{hi:.4f}]  corr(train frac, test frac)={corr:+.3f}", flush=True)
     p1 = C.write_csv(C.RESULTS / f"e15_{tag}_per_subject.csv", rows)
     p2 = C.write_csv(C.RESULTS / f"e15_{tag}_summary.csv", summ)
-    C.write_manifest(C.RESULTS / f"e15_{tag}_manifest.json", f"e15_{tag}", started, [p1, p2], {"args": vars(args), "class": "exploratory_post_hoc"})
+    p3 = C.write_csv(C.RESULTS / f"e15_{tag}_per_cell.csv", cell_rows)
+    C.write_manifest(C.RESULTS / f"e15_{tag}_manifest.json", f"e15_{tag}", started, [p1, p2, p3], {"args": vars(args), "class": "exploratory_post_hoc"})
     print(f"DONE e15 tag={tag}")
     return 0
 

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Map section headings and table/figure captions to the margin line numbers of main_highlighted.pdf (lineno package).
-Output: markdown table (heading -> page, line). Margin numbers are digit-only words left of the main text edge."""
-import re, sys, fitz
+Output: markdown table (heading -> page, line). Margin numbers are digit-only words left of the main text edge.
+Section headings are recognised as ENTIRELY BOLD lines whose text starts with the heading title (the section number is
+typeset in a separate block by iopjournal.cls); captions/other phrases are matched by prefix on any line."""
+import re, sys
+import fitz
 pdf = sys.argv[1]; phrases = sys.argv[2:]
 doc = fitz.open(pdf)
 heads = ["1 Introduction", "2 Methods", "2.1 Datasets", "2.2 Preprocessing", "2.3 Decoders", "2.4 Protocol ladder", "2.5 Controlled analyses",
@@ -17,19 +20,25 @@ for pno, page in enumerate(doc):
         continue
     xs = sorted(w[0] for w in alpha); edge = xs[len(xs) // 20]  # 5th percentile of text x0
     margin = [(w[1], int(w[4])) for w in words if w[4].isdigit() and w[2] < edge - 2 and 1 <= len(w[4]) <= 4]
-    lines = {}
-    for w in words:
-        if w[0] >= edge - 2:
-            lines.setdefault((w[5], w[6]), []).append(w)
-    for key, ws in lines.items():
-        ws = sorted(ws, key=lambda w: w[0]); y = ws[0][1]
-        line_text = " ".join(w[4] for w in ws)
-        norm = re.sub(r"^[\d.]+\s+", "", line_text).lower()
-        for h in heads:
-            hn = re.sub(r"^[\d.]+\s+", "", h).lower()
-            if (line_text.lower().startswith(h.lower()) or norm.startswith(hn)) and h not in [r[0] for r in rows] and len(line_text) < 90:
-                near = [m for m in margin if abs(m[0] - y) < 5]
-                rows.append((h, pno + 1, near[0][1] if near else "n/a"))
+    d = page.get_text("dict")
+    for block in d["blocks"]:
+        for line in block.get("lines", []):
+            spans = [sp for sp in line["spans"] if sp["text"].strip()]
+            if not spans or spans[0]["bbox"][0] < edge - 30:
+                continue
+            line_text = " ".join(sp["text"].strip() for sp in spans); y = line["bbox"][1]
+            # iopjournal.cls: section titles in CMBX (bold flag 16), subsection titles in CMTI (italic flag 2); body lines are regular
+            bold = all((sp["flags"] & 16) or (sp["flags"] & 2) for sp in spans) and len(line_text) < 90
+            norm = re.sub(r"^[\d.]+\s+", "", line_text).lower()
+            for h in heads:
+                hn = re.sub(r"^[\d.]+\s+", "", h).lower()
+                numbered = bool(re.match(r"^[\d.]+\s+", h))
+                hit = (bold and norm.startswith(hn)) if numbered else (line_text.lower().startswith(h.lower()) or (bold and norm.startswith(hn)))
+                if hit and h not in [r[0] for r in rows] and len(line_text) < 90:
+                    near = [m for m in margin if abs(m[0] - y) < 5]
+                    rows.append((h, pno + 1, near[0][1] if near else "n/a"))
+order = {h: i for i, h in enumerate(heads)}
+rows.sort(key=lambda r: (r[1], r[2] if isinstance(r[2], int) else 10**6, order[r[0]]))
 print("| Heading / caption | page | line |"); print("|---|---|---|")
 for h, p, n in rows: print(f"| {h} | {p} | {n} |")
 print(f"\n(margin numbers detected on page 6: {len([1 for w in doc[5].get_text('words') if w[4].isdigit()])} digit words)")

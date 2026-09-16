@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Launch the full revision experiment suite (REVISION_PLAN_v1.md) as detached chains:
+# Launch the full JNE-revision experiment suite (REVISION_PLAN_v1.md) as detached chains:
 # one CPU chain (classical analyses, sequential) and one chain per GPU. Each script writes its own
 # log; the chain log records exit codes. Usage: bash run_all.sh <TAG>
 set -u
 TAG=${1:?tag}
-cd "$(dirname "$0")/../../.."
-PY=${PY:-python}
+cd /home/wjeong/bf
+PY=/home/wjeong/envs/jeongwoncheol_bf/bin/python
 E=test/experiments/revision
 mkdir -p logs/$TAG
 run() {  # run <name> <cmd...>  (sequential inside a chain; exit code recorded)

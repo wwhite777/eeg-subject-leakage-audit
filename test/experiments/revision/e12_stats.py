@@ -57,8 +57,7 @@ def main() -> int:
             fam.append(({"model": model, "k": k, "n": len(v), "mean_acc": C.fmt(v.mean()), "ci_low": C.fmt(lo), "ci_high": C.fmt(hi),
                          "diff_vs_k0": C.fmt(diff.mean()), "diff_ci_low": C.fmt(dlo), "diff_ci_high": C.fmt(dhi), "p_wilcoxon": C.fmt(p),
                          "p_signflip": C.fmt(C.signflip_perm_p(diff)) if k else "1"}, p))
-        for (row, _), ph in zip(fam, C.holm([p for _, p in fam[1:]]) and ([1.0] + C.holm([p for _, p in fam[1:]]))):
-            row["p_holm"] = C.fmt(ph)
+        for row, _ in fam:
             out.append(row)
         for proto in ("within_subject", "subject_disjoint"):
             d = ref.get(("paradigm_mean", model, proto))
@@ -68,7 +67,14 @@ def main() -> int:
                             "diff_vs_k0": "", "diff_ci_low": "", "diff_ci_high": "", "p_wilcoxon": "", "p_signflip": "", "p_holm": ""})
         for row in out:
             if row["model"] == model:
-                print(f"  {model:14s} k={row['k']!s:22s} acc={float(row['mean_acc']):.4f} [{float(row['ci_low']):.4f},{float(row['ci_high']):.4f}]" + (f"  Δ vs k0 {float(row['diff_vs_k0']):+.4f} [{float(row['diff_ci_low']):+.4f},{float(row['diff_ci_high']):+.4f}] holm={float(row['p_holm']):.2e}" if row["diff_vs_k0"] else ""))
+                print(f"  {model:14s} k={row['k']!s:22s} acc={float(row['mean_acc']):.4f} [{float(row['ci_low']):.4f},{float(row['ci_high']):.4f}]" + (f"  Δ vs k0 {float(row['diff_vs_k0']):+.4f} [{float(row['diff_ci_low']):+.4f},{float(row['diff_ci_high']):+.4f}] p={float(row['p_wilcoxon']):.2e}" if row["diff_vs_k0"] else ""))
+    # Holm within the displayed calibration table: all k > 0 contrasts of all decoders (one family)
+    tests = [r for r in out if str(r["k"]).isdigit() and int(r["k"]) > 0]
+    adj = C.holm([float(r["p_wilcoxon"]) for r in tests])
+    for r, a in zip(tests, adj):
+        r["p_holm"] = C.fmt(a); r["family_size"] = len(tests)
+    for r in out:
+        r.setdefault("p_holm", ""); r.setdefault("family_size", "")
     path = C.write_csv(C.RESULTS / f"stats_{args.tag}_e12_calibration.csv", out)
     C.write_manifest(C.RESULTS / f"stats_{args.tag}_e12_manifest.json", f"stats_{args.tag}_e12", started, [path], {"args": vars(args), "paradigms": tasks})
     print("DONE e12 stats", path)

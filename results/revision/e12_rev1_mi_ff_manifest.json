@@ -1,7 +1,7 @@
 {
   "run_id": "e12_rev1_mi_ff",
   "command": "test/experiments/revision/e12_calibration.py --tasks imagery_fists_feet --n-draws 3 --n-jobs 12 --gpu 0 --tag rev1_mi_ff",
-  "cwd": "<repo-root>",
+  "cwd": "/home/wjeong/bf",
   "git_head": "a8856e8c73e449ea2413b6060109a65aa55125a6",
   "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
   "versions": {

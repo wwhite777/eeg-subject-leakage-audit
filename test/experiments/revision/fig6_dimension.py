@@ -93,11 +93,15 @@ def main() -> int:
         xs = sorted({k[1] for k in infl if k[0] == m and k[2] == d})
         means, los, his = [], [], []
         for N in xs:
-            v = np.array(infl[(m, N, d)]); lo, hi = C.bootstrap_ci(v); means.append(v.mean()); los.append(lo); his.append(hi)
+            v = np.array(infl[(m, N, d)]); means.append(v.mean())
+            if N == max(Ns):  # a single subject draw at N = 109: the four paradigm cells are not independent draws -> no CI
+                los.append(np.nan); his.append(np.nan)
+            else:
+                lo, hi = C.bootstrap_ci(v); los.append(lo); his.append(hi)
             ax.scatter(N * np.exp(rng.uniform(-0.06, 0.06, len(v))), v, s=5, color=F.MODEL_COLOR[m], alpha=0.3, linewidths=0, rasterized=True)
         ax.plot(xs, means, marker=F.MODEL_MARK[m], ms=4, color=F.MODEL_COLOR[m], label=lab, zorder=5)
-        ax.fill_between(xs, los, his, color=F.MODEL_COLOR[m], alpha=0.2, linewidth=0)
-        cap.append(f"{lab} vs N: " + ", ".join(f"N={N}: {mm:+.3f} [{lo:+.3f},{hi:+.3f}]" for N, mm, lo, hi in zip(xs, means, los, his)))
+        ax.fill_between(xs[:-1], los[:-1], his[:-1], color=F.MODEL_COLOR[m], alpha=0.2, linewidth=0)
+        cap.append(f"{lab} vs N: " + ", ".join((f"N={N}: {mm:+.3f} [{lo:+.3f},{hi:+.3f}]" if lo == lo else f"N={N}: {mm:+.3f} (single draw, no CI)") for N, mm, lo, hi in zip(xs, means, los, his)))
     ax.axhline(0, color="#888888", lw=0.8, ls="--"); ax.set_xscale("log"); ax.set_xticks(Ns); ax.set_xticklabels(Ns)
     ax.set_xlabel("Training-subject count N (count)"); ax.set_ylabel("Δ(P0 − P2) (fraction correct)"); ax.legend(loc="upper right", frameon=True, fontsize=6.5)
     ax.set_title("(c) Δ(P0 − P2) vs N (points = paradigm × draw)")
@@ -105,7 +109,7 @@ def main() -> int:
     caption = ("Figure 6. Feature dimension and subject count within EEGBCI. (a) TS+LR accuracy after projecting the tangent features on the first d principal "
                "components fitted on each training fold (paradigm mean; lines = mean, bands = subject-bootstrap 95 % CI; the right axis shows the per-subject Δ(P1 − P2), points = subjects). "
                "(b) Mean Δ(P0 − P2) of TS+LR for random subsets of N training subjects (10 draws for N < 109) and d principal components, pooled over the four paradigms. "
-               "(c) Δ(P0 − P2) versus N for CSP+LDA (six log-variance features) and full-dimension TS+LR (points = paradigm × draw cells; line = mean; band = 95 % CI). Values: " + " | ".join(cap))
+               "(c) Δ(P0 − P2) versus N for CSP+LDA (six log-variance features) and full-dimension TS+LR (points = paradigm × draw cells; line = mean; band = draw-bootstrap 95 % CI, none at N = 109 where there is a single draw). Values: " + " | ".join(cap))
     F.save(fig, f"fig6_dimension_{args.tag}", caption, [Path(args.e4), Path(args.e8)])
     return 0
 
