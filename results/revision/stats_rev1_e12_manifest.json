@@ -1,0 +1,36 @@
+{
+  "run_id": "stats_rev1_e12",
+  "command": "test/experiments/revision/e12_stats.py --tag rev1 --e12 results/revision/e12_rev1_mi_lr_per_subject.csv,results/revision/e12_rev1_mi_ff_per_subject.csv --e1 results/revision/e1_eegbci_rev1_per_subject.csv --e11 results/revision/e11_rev1_t12_per_subject.csv,results/revision/e11_rev1_t34_per_subject.csv --e9 results/revision/e9_rev1_t12_per_subject.csv,results/revision/e9_rev1_t34_per_subject.csv",
+  "cwd": "<repo-root>",
+  "git_head": "a8856e8c73e449ea2413b6060109a65aa55125a6",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T09:01:51Z",
+  "finished_utc": "2026-09-16T09:01:56Z",
+  "outputs": {
+    "results/revision/stats_rev1_e12_calibration.csv": "90679efe49457847a2087b1669bd882f005ae4fada53bc065c8b94791e964536"
+  },
+  "args": {
+    "tag": "rev1",
+    "e12": "results/revision/e12_rev1_mi_lr_per_subject.csv,results/revision/e12_rev1_mi_ff_per_subject.csv",
+    "e1": "results/revision/e1_eegbci_rev1_per_subject.csv",
+    "e11": "results/revision/e11_rev1_t12_per_subject.csv,results/revision/e11_rev1_t34_per_subject.csv",
+    "e9": "results/revision/e9_rev1_t12_per_subject.csv,results/revision/e9_rev1_t34_per_subject.csv"
+  },
+  "paradigms": [
+    "imagery_left_right_fist",
+    "imagery_fists_feet"
+  ]
+}

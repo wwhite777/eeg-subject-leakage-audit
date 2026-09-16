@@ -1,0 +1,39 @@
+{
+  "run_id": "e1_bci2a_rev1",
+  "command": "test/experiments/revision/e1_ladder_classical.py --dataset bci2a --n-seeds 5 --n-jobs 36 --tag rev1",
+  "cwd": "<repo-root>",
+  "git_head": "489586d235708048756790acd21570a0da57958b",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T05:01:14Z",
+  "finished_utc": "2026-09-16T05:02:10Z",
+  "outputs": {
+    "results/revision/e1_bci2a_rev1_per_subject.csv": "a2768c8b3dbbb6b964543e719fc34aa49b5eb462d91c3fe9604d4ce72d9185e1",
+    "results/revision/e1_bci2a_rev1_per_fold.csv": "9209e1966efcb3a107a4ea2df6a9aeb9c112d55de601d76b1db2b070f590affc"
+  },
+  "args": {
+    "dataset": "bci2a",
+    "tasks": "imagery_left_right_fist,real_left_right_fist,imagery_fists_feet,real_fists_feet",
+    "models": "csp_lda,riemann_ts_lr",
+    "preproc": "none",
+    "n_seeds": 5,
+    "n_jobs": 36,
+    "max_subjects": 0,
+    "tag": "rev1",
+    "skip_within": false
+  },
+  "smoke": false,
+  "n_jobs": 36
+}

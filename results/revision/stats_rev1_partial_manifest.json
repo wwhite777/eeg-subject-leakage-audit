@@ -1,0 +1,43 @@
+{
+  "run_id": "stats_rev1_partial",
+  "command": "test/experiments/revision/e_stats.py --tag rev1_partial --e6 results/revision/e6_rev1_per_subject.csv --e14 results/revision/e14_rev1_per_subject.csv",
+  "cwd": "<repo-root>",
+  "git_head": "2f5df6015151e69f0a99b5915c2374795f0440c4",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T06:34:55Z",
+  "finished_utc": "2026-09-16T06:35:03Z",
+  "outputs": {
+    "results/revision/stats_rev1_partial_tost.csv": "aaa31ff8124cb1ba9af53f08d6d4861b28e608849f699a65130ab25c3a9ca976"
+  },
+  "args": {
+    "tag": "rev1_partial",
+    "e1_eegbci": null,
+    "e1_bci2a": null,
+    "e9": null,
+    "e10": null,
+    "e11": null,
+    "e2": null,
+    "e4": null,
+    "e5": null,
+    "e3c": null,
+    "e6": "results/revision/e6_rev1_per_subject.csv",
+    "e14": "results/revision/e14_rev1_per_subject.csv",
+    "e7": null,
+    "e8": null,
+    "e13_classical": null,
+    "e13_deep": null
+  }
+}

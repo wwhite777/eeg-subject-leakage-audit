@@ -1,0 +1,9 @@
+task,space,ss_total,frac_subject,frac_class,frac_subject_x_class,frac_residual,n_subjects,n_trials,n_dims
+imagery_left_right_fist,common_tangent,949578,0.867409,0.000201111,0.00265557,0.129734,109,4898,2080
+imagery_left_right_fist,common_tangent_subject_centered,125905,2.39269e-31,0.00128539,0.0202597,0.978455,109,4898,2080
+real_left_right_fist,common_tangent,938630,0.85905,0.000223389,0.00284504,0.137882,109,4897,2080
+real_left_right_fist,common_tangent_subject_centered,132300,2.22497e-31,0.00161852,0.0201511,0.97823,109,4897,2080
+imagery_fists_feet,common_tangent,940839,0.869001,0.00025565,0.00370035,0.127043,109,4897,2080
+imagery_fists_feet,common_tangent_subject_centered,123249,2.31316e-31,0.00215784,0.028041,0.969801,109,4897,2080
+real_fists_feet,common_tangent,952079,0.86183,0.000416616,0.00654487,0.131209,109,4879,2080
+real_fists_feet,common_tangent_subject_centered,131549,2.22292e-31,0.00291073,0.0474727,0.949617,109,4879,2080

@@ -1,0 +1,40 @@
+{
+  "run_id": "e9_rev1_global_t12",
+  "command": "test/experiments/revision/e9_deep_ladder.py --tasks imagery_left_right_fist,real_left_right_fist --preproc global --seeds 20260916 --gpu 0 --tag rev1_global_t12",
+  "cwd": "<repo-root>",
+  "git_head": "2f5df6015151e69f0a99b5915c2374795f0440c4",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T06:17:49Z",
+  "finished_utc": "2026-09-16T06:26:46Z",
+  "outputs": {
+    "results/revision/e9_rev1_global_t12_per_subject.csv": "654e0ac4111cd4e4ad71f59177aa999a968db8e8e09a7ebea1ccf230ffe48480",
+    "results/revision/e9_rev1_global_t12_per_fold.csv": "18448b8dbe2d96b09feff989bc9f853412d2b19a39db2fe10306cc23dcadc6f3"
+  },
+  "args": {
+    "tasks": "imagery_left_right_fist,real_left_right_fist",
+    "models": "eegnet_v4,shallow_fbcsp",
+    "protocols": "trial_random,run_disjoint,subject_disjoint",
+    "seeds": "20260916",
+    "widths": "",
+    "preproc": "global",
+    "epochs": 40,
+    "gpu": 0,
+    "max_subjects": 0,
+    "tag": "rev1_global_t12"
+  },
+  "device": "cuda:0",
+  "smoke": false
+}

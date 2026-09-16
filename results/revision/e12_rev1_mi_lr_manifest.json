@@ -1,0 +1,42 @@
+{
+  "run_id": "e12_rev1_mi_lr",
+  "command": "test/experiments/revision/e12_calibration.py --tasks imagery_left_right_fist --n-draws 3 --n-jobs 12 --gpu 0 --tag rev1_mi_lr",
+  "cwd": "<repo-root>",
+  "git_head": "a8856e8c73e449ea2413b6060109a65aa55125a6",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T06:33:33Z",
+  "finished_utc": "2026-09-16T08:53:59Z",
+  "outputs": {
+    "results/revision/e12_rev1_mi_lr_per_subject.csv": "c154c8d10313e0882ea13b4bfdf115a8831a86c11db4b3cd3af275503247c6ec"
+  },
+  "args": {
+    "tasks": "imagery_left_right_fist",
+    "models": "csp_lda,riemann_ts_lr,eegnet_v4",
+    "n_draws": 3,
+    "n_jobs": 12,
+    "gpu": 0,
+    "max_subjects": 0,
+    "tag": "rev1_mi_lr"
+  },
+  "k_grid": [
+    0,
+    4,
+    8,
+    16,
+    30
+  ],
+  "smoke": false
+}

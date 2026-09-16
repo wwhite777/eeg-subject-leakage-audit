@@ -1,0 +1,32 @@
+{
+  "run_id": "e15_rev1",
+  "command": "test/experiments/revision/e15_stratification_artifact.py --tag rev1",
+  "cwd": "<repo-root>",
+  "git_head": "489586d235708048756790acd21570a0da57958b",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T05:09:07Z",
+  "finished_utc": "2026-09-16T05:09:32Z",
+  "outputs": {
+    "results/revision/e15_rev1_per_subject.csv": "cfc0cb3b2ec6f5f51c80f00299c1c42ebf829a7c44e67ce00a41a823a3591bc0",
+    "results/revision/e15_rev1_summary.csv": "a8130d0b34ba137dde1518a8903847d4a91106b9a57d62609392352a02e0772c"
+  },
+  "args": {
+    "tasks": "imagery_left_right_fist,real_left_right_fist,imagery_fists_feet,real_fists_feet",
+    "n_seeds": 5,
+    "tag": "rev1"
+  },
+  "class": "exploratory_post_hoc"
+}

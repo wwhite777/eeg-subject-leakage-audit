@@ -1,0 +1,48 @@
+{
+  "run_id": "e8_rev1",
+  "command": "test/experiments/revision/e8_factorial.py --n-draws 10 --n-jobs 36 --tag rev1",
+  "cwd": "<repo-root>",
+  "git_head": "0efcda8645192c3ad376368e52a8e2a9e3c2b710",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T06:30:29Z",
+  "finished_utc": "2026-09-16T07:12:00Z",
+  "outputs": {
+    "results/revision/e8_rev1_per_draw.csv": "38cdb3ed5aca6eda28483a4599910d6693ec5d3e9596c85024e130f5af7cd6df"
+  },
+  "args": {
+    "tasks": "imagery_left_right_fist,real_left_right_fist,imagery_fists_feet,real_fists_feet",
+    "models": "riemann_ts_lr,csp_lda",
+    "n_draws": 10,
+    "n_jobs": 36,
+    "max_subjects": 0,
+    "tag": "rev1"
+  },
+  "N_grid": [
+    9,
+    18,
+    36,
+    72,
+    109
+  ],
+  "d_grid": [
+    8,
+    32,
+    128,
+    512,
+    2080
+  ],
+  "smoke": false
+}

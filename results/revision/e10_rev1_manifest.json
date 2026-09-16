@@ -1,0 +1,38 @@
+{
+  "run_id": "e10_rev1",
+  "command": "test/experiments/revision/e10_bci2a_deep.py --gpu 0 --tag rev1",
+  "cwd": "<repo-root>",
+  "git_head": "489586d235708048756790acd21570a0da57958b",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T04:53:46Z",
+  "finished_utc": "2026-09-16T05:03:17Z",
+  "outputs": {
+    "results/revision/e10_rev1_per_subject.csv": "d47ac94cdd16b295cd2c7664cec89b4246506d934ff56eed209723c2b0599a35",
+    "results/revision/e10_rev1_per_fold.csv": "9343a8a3256d4e3b0de6a6ae96904f9d2a15c7c588f0ebb87e8c6fbd191e5ee2"
+  },
+  "args": {
+    "models": "eegnet_v4,shallow_fbcsp",
+    "protocols": "trial_random_6,trial_random_2,run_disjoint,session_disjoint,loso,subject_disjoint_5,within_session",
+    "seeds": "20260916,20260917,20260918",
+    "preproc": "ztrial",
+    "epochs": 40,
+    "gpu": 0,
+    "max_subjects": 0,
+    "tag": "rev1"
+  },
+  "device": "cuda:0",
+  "smoke": false
+}

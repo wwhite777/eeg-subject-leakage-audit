@@ -1,0 +1,40 @@
+{
+  "run_id": "e9_rev1_width_eegnet",
+  "command": "test/experiments/revision/e9_deep_ladder.py --models eegnet_v4 --widths 2,4,8,16,32 --protocols trial_random,subject_disjoint --seeds 20260916 --gpu 0 --tag rev1_width_eegnet",
+  "cwd": "<repo-root>",
+  "git_head": "489586d235708048756790acd21570a0da57958b",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T04:53:46Z",
+  "finished_utc": "2026-09-16T05:24:41Z",
+  "outputs": {
+    "results/revision/e9_rev1_width_eegnet_per_subject.csv": "2974fde0f86e6d72a97f114a1d998c048fb4ecaff1422615a2dbe96de5a9ad36",
+    "results/revision/e9_rev1_width_eegnet_per_fold.csv": "ff66fc2222e1a2a39ec5081c8308a879e7eead57fb61ebc1a0760e585b3bcb56"
+  },
+  "args": {
+    "tasks": "imagery_left_right_fist,real_left_right_fist,imagery_fists_feet,real_fists_feet",
+    "models": "eegnet_v4",
+    "protocols": "trial_random,subject_disjoint",
+    "seeds": "20260916",
+    "widths": "2,4,8,16,32",
+    "preproc": "ztrial",
+    "epochs": 40,
+    "gpu": 0,
+    "max_subjects": 0,
+    "tag": "rev1_width_eegnet"
+  },
+  "device": "cuda:0",
+  "smoke": false
+}

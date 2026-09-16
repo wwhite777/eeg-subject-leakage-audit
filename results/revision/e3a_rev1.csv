@@ -1,0 +1,17 @@
+task,split,centered,n_subjects,chance,subject_id_accuracy,per_subject_median,per_subject_min,per_subject_max
+imagery_left_right_fist,run_disjoint,False,109,0.00917431,0.999592,1,0.977778,1
+imagery_left_right_fist,run_disjoint,True,109,0.00917431,0,0,0,0
+imagery_left_right_fist,trial_random,False,109,0.00917431,1,1,1,1
+imagery_left_right_fist,trial_random,True,109,0.00917431,0.000204165,0,0,0.0238095
+real_left_right_fist,run_disjoint,False,109,0.00917431,0.999796,1,0.977778,1
+real_left_right_fist,run_disjoint,True,109,0.00917431,0,0,0,0
+real_left_right_fist,trial_random,False,109,0.00917431,1,1,1,1
+real_left_right_fist,trial_random,True,109,0.00917431,0,0,0,0
+imagery_fists_feet,run_disjoint,False,109,0.00917431,0.999796,1,0.977778,1
+imagery_fists_feet,run_disjoint,True,109,0.00917431,0,0,0,0
+imagery_fists_feet,trial_random,False,109,0.00917431,1,1,1,1
+imagery_fists_feet,trial_random,True,109,0.00917431,0.000204207,0,0,0.0222222
+real_fists_feet,run_disjoint,False,109,0.00917431,0.998975,1,0.888889,1
+real_fists_feet,run_disjoint,True,109,0.00917431,0,0,0,0
+real_fists_feet,trial_random,False,109,0.00917431,1,1,1,1
+real_fists_feet,trial_random,True,109,0.00917431,0,0,0,0

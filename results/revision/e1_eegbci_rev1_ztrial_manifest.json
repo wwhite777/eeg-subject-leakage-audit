@@ -1,0 +1,39 @@
+{
+  "run_id": "e1_eegbci_rev1_ztrial",
+  "command": "test/experiments/revision/e1_ladder_classical.py --dataset eegbci --preproc ztrial --n-seeds 5 --n-jobs 36 --skip-within --tag rev1_ztrial",
+  "cwd": "<repo-root>",
+  "git_head": "0efcda8645192c3ad376368e52a8e2a9e3c2b710",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T07:12:04Z",
+  "finished_utc": "2026-09-16T07:24:33Z",
+  "outputs": {
+    "results/revision/e1_eegbci_rev1_ztrial_per_subject.csv": "df62e02ae07ebd231234f337d5d2ac444940ed98af067e6f149f670c3c6cc666",
+    "results/revision/e1_eegbci_rev1_ztrial_per_fold.csv": "98d6b5fedfab4378277d46a9cbb8c11ec073b06f59ac5a48615df965bb39f3d2"
+  },
+  "args": {
+    "dataset": "eegbci",
+    "tasks": "imagery_left_right_fist,real_left_right_fist,imagery_fists_feet,real_fists_feet",
+    "models": "csp_lda,riemann_ts_lr",
+    "preproc": "ztrial",
+    "n_seeds": 5,
+    "n_jobs": 36,
+    "max_subjects": 0,
+    "tag": "rev1_ztrial",
+    "skip_within": true
+  },
+  "smoke": false,
+  "n_jobs": 36
+}

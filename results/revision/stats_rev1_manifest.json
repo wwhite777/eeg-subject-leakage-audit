@@ -1,0 +1,51 @@
+{
+  "run_id": "stats_rev1",
+  "command": "test/experiments/revision/e_stats.py --tag rev1 --e1-eegbci results/revision/e1_eegbci_rev1_per_subject.csv --e1-bci2a results/revision/e1_bci2a_rev1_per_subject.csv --e9 results/revision/e9_rev1_all_per_subject.csv --e11 results/revision/e11_rev1_all_per_subject.csv --e10 results/revision/e10_rev1_per_subject.csv --e2 results/revision/e2_rev1_per_subject.csv --e4 results/revision/e4_rev1_per_subject.csv --e5 results/revision/e5_rev1_per_subject.csv --e3c results/revision/e3c_rev1_per_subject.csv --e6 results/revision/e6_rev1_per_subject.csv --e14 results/revision/e14_rev1_per_subject.csv --e7 results/revision/e7_rev1_width_all_per_subject.csv --e8 results/revision/e8_rev1_per_draw.csv --e13-classical results/revision/e1_eegbci_rev1_ztrial_per_subject.csv --e13-deep results/revision/e9_rev1_global_all_per_subject.csv",
+  "cwd": "<repo-root>",
+  "git_head": "a8856e8c73e449ea2413b6060109a65aa55125a6",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T09:00:00Z",
+  "finished_utc": "2026-09-16T09:00:14Z",
+  "outputs": {
+    "results/revision/stats_rev1_ladder_means.csv": "0b65d647dec84450f7d27a5e21a8375bd94081baeb47aa772945712124aa9555",
+    "results/revision/stats_rev1_contrasts.csv": "2b7915b851f39d3712a9c33ff5f70f98067b40988272c5298aa93086bd7e1c09",
+    "results/revision/stats_rev1_e3c_contrasts.csv": "b76edabc7d792fce4c974273f043159e11f42f2ab4b394d445db90031ef8481d",
+    "results/revision/stats_rev1_e5_contrasts.csv": "ab746bb7c3e6367b27df9a6911afdbe96a51cc04f1cf6b166699e1c0502e4a78",
+    "results/revision/stats_rev1_tost.csv": "aaa31ff8124cb1ba9af53f08d6d4861b28e608849f699a65130ab25c3a9ca976",
+    "results/revision/stats_rev1_e2_sweep.csv": "544d66596671c278870f68af1260580f3070a2607dfe04a13be7b6e38d44d79b",
+    "results/revision/stats_rev1_e4_sweep.csv": "f1c6b75ef0d7df04659e8152574b6891bb39feef8e48d00fd3e496522279860a",
+    "results/revision/stats_rev1_factorial.csv": "695eb7e1354df83fa412597b37ff92c9c20833d75e580bca7671ddb9d6091db4",
+    "results/revision/stats_rev1_width.csv": "c6aede497094e5ec0220c0937a9ad17f8cd38b5a66558dbbec97af37e84a3571"
+  },
+  "args": {
+    "tag": "rev1",
+    "e1_eegbci": "results/revision/e1_eegbci_rev1_per_subject.csv",
+    "e1_bci2a": "results/revision/e1_bci2a_rev1_per_subject.csv",
+    "e9": "results/revision/e9_rev1_all_per_subject.csv",
+    "e10": "results/revision/e10_rev1_per_subject.csv",
+    "e11": "results/revision/e11_rev1_all_per_subject.csv",
+    "e2": "results/revision/e2_rev1_per_subject.csv",
+    "e4": "results/revision/e4_rev1_per_subject.csv",
+    "e5": "results/revision/e5_rev1_per_subject.csv",
+    "e3c": "results/revision/e3c_rev1_per_subject.csv",
+    "e6": "results/revision/e6_rev1_per_subject.csv",
+    "e14": "results/revision/e14_rev1_per_subject.csv",
+    "e7": "results/revision/e7_rev1_width_all_per_subject.csv",
+    "e8": "results/revision/e8_rev1_per_draw.csv",
+    "e13_classical": "results/revision/e1_eegbci_rev1_ztrial_per_subject.csv",
+    "e13_deep": "results/revision/e9_rev1_global_all_per_subject.csv"
+  }
+}

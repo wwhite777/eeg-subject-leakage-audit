@@ -1,0 +1,32 @@
+{
+  "run_id": "e14_rev1",
+  "command": "test/experiments/revision/e14_transductive.py --n-jobs 12 --tag rev1",
+  "cwd": "<repo-root>",
+  "git_head": "2f5df6015151e69f0a99b5915c2374795f0440c4",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T06:18:47Z",
+  "finished_utc": "2026-09-16T06:27:05Z",
+  "outputs": {
+    "results/revision/e14_rev1_per_subject.csv": "68528f25567375185da2cfd9c0e08932d9f8b2cbcf43a6cc8b4b551a4c485e45"
+  },
+  "args": {
+    "tasks": "imagery_left_right_fist,real_left_right_fist,imagery_fists_feet,real_fists_feet",
+    "n_jobs": 12,
+    "max_subjects": 0,
+    "tag": "rev1"
+  },
+  "smoke": false
+}

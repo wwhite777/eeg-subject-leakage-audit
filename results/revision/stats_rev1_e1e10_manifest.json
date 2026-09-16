@@ -1,0 +1,43 @@
+{
+  "run_id": "stats_rev1_e1e10",
+  "command": "test/experiments/revision/e_stats.py --tag rev1_e1e10 --e1-eegbci results/revision/e1_eegbci_rev1_per_subject.csv --e1-bci2a results/revision/e1_bci2a_rev1_per_subject.csv --e10 results/revision/e10_rev1_per_subject.csv",
+  "cwd": "<repo-root>",
+  "git_head": "489586d235708048756790acd21570a0da57958b",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T05:05:27Z",
+  "finished_utc": "2026-09-16T05:05:32Z",
+  "outputs": {
+    "results/revision/stats_rev1_e1e10_ladder_means.csv": "dccd25488bff77bc2a29d4bf91f5669f686e5132a8054148ebf47075fa9069e7",
+    "results/revision/stats_rev1_e1e10_contrasts.csv": "5b095c6bd3ac2c469dbb31cd14738545bf3d18c903e2349fe6b49c4b90e4bdcc"
+  },
+  "args": {
+    "tag": "rev1_e1e10",
+    "e1_eegbci": "results/revision/e1_eegbci_rev1_per_subject.csv",
+    "e1_bci2a": "results/revision/e1_bci2a_rev1_per_subject.csv",
+    "e9": null,
+    "e10": "results/revision/e10_rev1_per_subject.csv",
+    "e11": null,
+    "e2": null,
+    "e4": null,
+    "e5": null,
+    "e3c": null,
+    "e6": null,
+    "e7": null,
+    "e8": null,
+    "e13_classical": null,
+    "e13_deep": null
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "run_id": "e3_rev1",
+  "command": "test/experiments/revision/e3_subject_info.py --n-seeds 5 --n-jobs 36 --tag rev1",
+  "cwd": "<repo-root>",
+  "git_head": "2f5df6015151e69f0a99b5915c2374795f0440c4",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-09-16T05:22:30Z",
+  "finished_utc": "2026-09-16T05:57:51Z",
+  "outputs": {
+    "results/revision/e3a_rev1.csv": "b2a778d7e0e5c2f4f903123c5984c046397e02b902f6d1999532f84b4e592326",
+    "results/revision/e3b_rev1.csv": "1a3b3d03eac65c6e07117f131c768edeb4aa6652ec5c4d8b078fed1de0d583c2",
+    "results/revision/e3c_rev1_per_subject.csv": "4366592525f9a6b430e6eb36adef5b2b4c15ecf8a9be78e4e1d44d6c9b4f13fe",
+    "results/revision/e3d_rev1.csv": "5512c0e5f6c45e17c7bc4c6084873e9a511404b3de9254b7df4ae3e3caca3be6"
+  },
+  "args": {
+    "tasks": "imagery_left_right_fist,real_left_right_fist,imagery_fists_feet,real_fists_feet",
+    "n_seeds": 5,
+    "n_jobs": 36,
+    "max_subjects": 0,
+    "tag": "rev1",
+    "parts": "a,b,c,d"
+  },
+  "smoke": false
+}
