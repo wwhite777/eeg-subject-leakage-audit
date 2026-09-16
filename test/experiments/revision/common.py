@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared code for the JNE-revision analyses (REVISION_PLAN_v1.md).
+"""Shared code for the revision analyses (REVISION_PLAN_v1.md).
 
 Everything here is deterministic given the seeds in the plan. No modelling
 decision is made in this module; it provides loaders, split constructors that

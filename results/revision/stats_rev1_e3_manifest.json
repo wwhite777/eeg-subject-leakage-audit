@@ -1,7 +1,7 @@
 {
   "run_id": "stats_rev1_e3",
   "command": "test/experiments/revision/e_stats.py --tag rev1_e3 --e3c results/revision/e3c_rev1_per_subject.csv",
-  "cwd": "/home/wjeong/bf",
+  "cwd": "<repo-root>",
   "git_head": "2f5df6015151e69f0a99b5915c2374795f0440c4",
   "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
   "versions": {

@@ -1,7 +1,7 @@
 {
   "run_id": "stats_rev1_e2",
   "command": "test/experiments/revision/e_stats.py --tag rev1_e2 --e2 results/revision/e2_rev1_per_subject.csv",
-  "cwd": "/home/wjeong/bf",
+  "cwd": "<repo-root>",
   "git_head": "489586d235708048756790acd21570a0da57958b",
   "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
   "versions": {

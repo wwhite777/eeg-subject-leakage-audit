@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Statistics and aggregation for the JNE-revision analyses (plan B2, C1–C8).
+"""Statistics and aggregation for the revision analyses (plan B2, C1–C8).
 
 Reads the per-subject CSVs written by e1..e12 (by tag) and writes:
   stats_<tag>_ladder_means.csv     mean accuracy per (dataset, task/paradigm-average, model, protocol) with

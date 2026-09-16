@@ -1,7 +1,7 @@
 {
   "run_id": "stats_rev1_e13c",
   "command": "test/experiments/revision/e_stats.py --tag rev1_e13c --e13-classical results/revision/e1_eegbci_rev1_ztrial_per_subject.csv",
-  "cwd": "/home/wjeong/bf",
+  "cwd": "<repo-root>",
   "git_head": "0efcda8645192c3ad376368e52a8e2a9e3c2b710",
   "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
   "versions": {

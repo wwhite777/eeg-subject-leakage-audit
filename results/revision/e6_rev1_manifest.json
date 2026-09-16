@@ -1,7 +1,7 @@
 {
   "run_id": "e6_rev1",
   "command": "test/experiments/revision/e6_reference_target.py --n-jobs 36 --tag rev1",
-  "cwd": "/home/wjeong/bf",
+  "cwd": "<repo-root>",
   "git_head": "2f5df6015151e69f0a99b5915c2374795f0440c4",
   "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
   "versions": {

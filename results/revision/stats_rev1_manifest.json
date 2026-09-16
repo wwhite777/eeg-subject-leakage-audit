@@ -1,7 +1,7 @@
 {
   "run_id": "stats_rev1",
   "command": "test/experiments/revision/e_stats.py --tag rev1 --e1-eegbci results/revision/e1_eegbci_rev1_per_subject.csv --e1-bci2a results/revision/e1_bci2a_rev1_per_subject.csv --e9 results/revision/e9_rev1_all_per_subject.csv --e11 results/revision/e11_rev1_all_per_subject.csv --e10 results/revision/e10_rev1_per_subject.csv --e2 results/revision/e2_rev1_per_subject.csv --e4 results/revision/e4_rev1_per_subject.csv --e5 results/revision/e5_rev1_per_subject.csv --e3c results/revision/e3c_rev1_per_subject.csv --e6 results/revision/e6_rev1_per_subject.csv --e14 results/revision/e14_rev1_per_subject.csv --e7 results/revision/e7_rev1_width_all_per_subject.csv --e8 results/revision/e8_rev1_per_draw.csv --e13-classical results/revision/e1_eegbci_rev1_ztrial_per_subject.csv --e13-deep results/revision/e9_rev1_global_all_per_subject.csv",
-  "cwd": "/home/wjeong/bf",
+  "cwd": "<repo-root>",
   "git_head": "b75bce0e030c6edb74b63e11cf12f44eb734a15b",
   "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
   "versions": {

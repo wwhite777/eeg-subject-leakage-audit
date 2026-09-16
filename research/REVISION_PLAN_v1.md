@@ -1,4 +1,4 @@
-# REVISION_PLAN_v1 — JNE major revision of the subject-leakage audit (bf/)
+# REVISION_PLAN_v1 — major revision of the subject-leakage audit (bf/)
 
 Frozen: 2026-09-16 (before any new result exists; sha256 recorded in DECISION_LOG.md).
 Scope: the analyses, definitions and decision rules that answer Referee 1 (R1.1–R1.10 + minor),

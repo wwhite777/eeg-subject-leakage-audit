@@ -1,7 +1,7 @@
 {
   "run_id": "stats_rev1_e12",
   "command": "test/experiments/revision/e12_stats.py --tag rev1 --e12 results/revision/e12_rev1_mi_lr_per_subject.csv,results/revision/e12_rev1_mi_ff_per_subject.csv --e1 results/revision/e1_eegbci_rev1_per_subject.csv --e11 results/revision/e11_rev1_t12_per_subject.csv,results/revision/e11_rev1_t34_per_subject.csv --e9 results/revision/e9_rev1_t12_per_subject.csv,results/revision/e9_rev1_t34_per_subject.csv",
-  "cwd": "/home/wjeong/bf",
+  "cwd": "<repo-root>",
   "git_head": "b75bce0e030c6edb74b63e11cf12f44eb734a15b",
   "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
   "versions": {

@@ -2,7 +2,7 @@
 """Convert the generated figure captions (*_caption.txt, exact-data values) into LaTeX snippets under manuscript/v2/captions/."""
 import re, sys
 from pathlib import Path
-ROOT = Path("/home/wjeong/bf"); SRC = ROOT / "result/figure/revision"; OUT = ROOT / "manuscript/v2/captions"; OUT.mkdir(parents=True, exist_ok=True)
+ROOT = Path(__file__).resolve().parents[3]; SRC = ROOT / "result/figure/revision"; OUT = ROOT / "manuscript/v2/captions"; OUT.mkdir(parents=True, exist_ok=True)
 def tex(s):
     s = s.replace("\\", "\\textbackslash{}").replace("%", "\\%").replace("&", "\\&").replace("_", "\\_").replace("#", "\\#")
     s = s.replace("Δ", "$\\Delta$").replace("‖", "$\\lVert$").replace("₂", "$_2$").replace("≥", "$\\ge$").replace("≤", "$\\le$").replace("×", "$\\times$").replace("→", "$\\to$").replace("−", "$-$").replace("’", "'")
