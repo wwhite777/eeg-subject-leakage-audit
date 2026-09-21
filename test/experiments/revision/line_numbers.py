@@ -9,7 +9,7 @@ pdf = sys.argv[1]; phrases = sys.argv[2:]
 doc = fitz.open(pdf)
 heads = ["1 Introduction", "2 Methods", "2.1 Datasets", "2.2 Preprocessing", "2.3 Decoders", "2.4 Protocol ladder", "2.5 Controlled analyses",
          "2.6 Statistical analysis", "2.7 Reproducibility", "3 Results", "3.1 The protocol ladder on EEGBCI", "3.2 The ladder on BCI-IV-2a",
-         "3.3 Regularization does not remove", "3.4 Where the subject information lives", "3.5 The reference mean", "3.6 Feature dimension and training-subject",
+         "3.3 Regularization does not remove", "3.4 Where the subject information lives", "3.5 The reference mean", "3.6 Feature dimension and sampled-subject",
          "3.7 Network width and matched preprocessing", "3.8 Calibration", "3.9 Exploratory", "4 Discussion", "5 Conclusion", "Acknowledgments", "Funding",
          "Data availability", "Disclosure of AI-assisted tools", "References"] + phrases
 rows = []

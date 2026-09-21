@@ -4,7 +4,11 @@ value; per-subject points.
 
 Codex r002 finding F-r002-5: k is a CAP (nominal k). The availability table is read so that the caption
 states how many subject-paradigm cells fell short of the nominal k, and the within-subject line is labelled
-as an UNMATCHED reference (trained on all three runs under a different protocol; orientation only).
+as an UNMATCHED reference (orientation only, not a paired comparison).
+
+Codex r003 finding F-r003-4: that reference is a LEAVE-ONE-RUN-OUT fit — e1_ladder_classical.within_splits()
+and e11_within_deep.py train on two runs of the test subject and score the held-out run, rotating over the
+three runs — not a fit "trained on all three runs". The caption now says so.
 Usage: fig7_calibration.py --e12 <csv,csv> --e1 <e1 eegbci per_subject.csv> --e11 <csv,csv> [--avail <csv>] --tag rev1
 """
 
@@ -94,8 +98,9 @@ def main() -> int:
     caption = (f"Figure 7. Calibration-size curve for unseen subjects on EEGBCI ({' and '.join(C.TASK_SHORT[t] for t in tasks)}; mean over these paradigms; 109 subjects). A subject-disjoint model (P2 training subjects) receives "
                "up to k labelled trials of the test subject (k is a nominal cap drawn from the subject's first two runs, 3 draws averaged) and is evaluated on the subject's third run; CSP+LDA and TS+LR are refitted with the k trials appended, "
                "EEGNet is fine-tuned for 20 epochs. Nominal versus actually available calibration trials: " + note + " "
-               "Points = subjects; line = mean; band = subject-bootstrap 95 % CI; dotted = chance. The dashed green line is the within-subject (leave-one-run-out) mean of the same decoder: it is trained on all three runs "
-               "of the test subject under a different protocol, so it is an UNMATCHED reference shown for orientation only and is not a paired comparison with the k-trial curve. "
+               "Points = subjects; line = mean; band = subject-bootstrap 95 % CI; dotted = chance. The dashed green line is the within-subject (leave-one-run-out) mean of the same decoder: each fit is trained on two runs "
+               "of the test subject and evaluated on the held-out run, rotated over the three runs, so it follows a different protocol from the k-trial curve (which is always scored on the third run) and is an "
+               "UNMATCHED reference shown for orientation only, not a paired comparison with the k-trial curve. "
                "Values: " + " | ".join(cap))
     F.save(fig, f"fig7_calibration_{args.tag}", caption, files + [Path(args.avail)])
     return 0

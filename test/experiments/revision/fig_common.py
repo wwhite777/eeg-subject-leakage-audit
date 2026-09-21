@@ -11,6 +11,12 @@ every figure is drawn at FIG_W_IN = 6.024 in, the measured text width of the com
 (433.70 pt on main_clean.pdf), and saved at exactly that canvas size (no bbox_inches="tight"), so the
 placement scale factor is 1.000 and the generated point sizes are the printed point sizes. No text is
 below 8 pt; MIN_PT below is asserted over every text artist before the file is written.
+
+Codex r003 finding F-r003-5: Text.get_fontsize() reports the PARENT size of a mathtext expression, so a
+$\\ell_2$ subscript or a 10^{-4} log-tick exponent passed that check while rendering at 5.6-6.0 pt. The
+vector companion is therefore written FIRST and re-measured with pymupdf (assert_pdf_min_glyph); a figure
+whose PDF carries any text span below MIN_PT is deleted, not published. plain_log_ticks() replaces the
+mathtext power-of-ten tick labels with plain strings drawn at the full tick font size.
 """
 
 from __future__ import annotations
@@ -30,6 +36,9 @@ FIG_DIR = C.ROOT / "result" / "figure" / "revision"
 # \linewidth of manuscript/v2 measured with fitz on main_clean.pdf: 433.70 pt = 6.024 in.
 FIG_W_IN = 6.024
 MIN_PT = 8.0  # IOP minimum text size at the final figure size
+# Width the figures actually occupy in main_clean.pdf (fitz, r003 audit): 433.718994 pt, i.e. the PDF
+# companion (6.024 in = 433.728 pt) is placed at scale 0.99998, so native pt == printed pt to 2e-4 pt.
+PLACED_W_PT = 433.718994
 
 # fixed hue order (Okabe–Ito), validated: protocols and models never share a slot within one figure
 PROTO_COLOR = {"within_subject": "#009E73", "within_session": "#009E73", "trial_random": "#D55E00", "trial_random_6": "#D55E00",
@@ -65,6 +74,73 @@ def min_font_pt(fig) -> float:
         if str(t.get_text()).strip() and t.get_visible():
             sizes.append(float(t.get_fontsize()))
     return min(sizes) if sizes else float("nan")
+
+
+def pdf_glyph_spans(pdf_path):
+    """(page width in pt, [(size_pt, text, font)]) for every non-blank text span of a saved figure PDF.
+
+    Measured with pymupdf on the vector companion, so these are the sizes the glyphs are ACTUALLY drawn
+    at — including mathtext sub/superscripts, which Text.get_fontsize() reports at the parent size.
+    """
+    import pymupdf  # noqa: PLC0415  (fitz; only needed when a figure is written)
+
+    doc = pymupdf.open(str(pdf_path))
+    page_w = float(doc[0].rect.width)
+    spans = []
+    for page in doc:
+        for block in page.get_text("rawdict").get("blocks", []):
+            for line in block.get("lines", []):
+                for span in line.get("spans", []):
+                    txt = "".join(ch["c"] for ch in span.get("chars", []))
+                    if txt.strip():
+                        spans.append((float(span["size"]), txt, str(span.get("font", ""))))
+    doc.close()
+    return page_w, spans
+
+
+def assert_pdf_min_glyph(pdf_path, name, min_pt=MIN_PT, delete_on_fail=True):
+    """Refuse a figure whose PDF companion carries a rendered glyph below min_pt at the placed width.
+
+    F-r003-5: this is the check that catches mathtext scaling. The figure is saved at FIG_W_IN, so the
+    page width must equal the placed width; the printed size of a span is size * PLACED_W_PT / page_w.
+    Returns the smallest printed size. Raises SystemExit (and removes the file) otherwise; also raises if
+    the PDF holds no text at all, so "verified nothing" cannot look like "nothing to verify".
+    """
+    pdf_path = Path(pdf_path)
+    page_w, spans = pdf_glyph_spans(pdf_path)
+
+    def fail(msg):
+        if delete_on_fail:
+            pdf_path.unlink(missing_ok=True)
+        raise SystemExit(f"{name}: {msg}")
+
+    if abs(page_w - FIG_W_IN * 72.0) > 0.5:
+        fail(f"pdf page width {page_w:.2f} pt != {FIG_W_IN * 72.0:.2f} pt (printed sizes would not be 1:1)")
+    if not spans:
+        fail(f"no text span found in {pdf_path.name} — the glyph guard would verify nothing")
+    scale = PLACED_W_PT / page_w
+    small = sorted({(round(s * scale, 4), t) for s, t, _ in spans if s * scale < min_pt - 1e-3})
+    if small:
+        for pt, t in small[:10]:
+            print(f"  GLYPH BELOW {min_pt} PT: {pt} pt {t!r}")
+        fail(f"{len(small)} rendered glyph size(s) below {min_pt} pt in the PDF companion (mathtext?)")
+    return min(s * scale for s, _, _ in spans)
+
+
+def plain_log_ticks(ax, which, values, fmt=None):
+    """Label a log axis with plain strings instead of 10^{x} mathtext (whose exponent renders at 5.6 pt).
+
+    `values` are the data positions to label; minor ticks keep their marks but lose their labels, so the
+    smallest glyph on the axis is the tick font size itself (F-r003-5).
+    """
+    from matplotlib.ticker import FixedFormatter, FixedLocator, NullFormatter
+
+    fmt = fmt or (lambda v: f"{v:g}")
+    axis = ax.xaxis if which == "x" else ax.yaxis
+    vals = list(values)
+    axis.set_major_locator(FixedLocator(vals))
+    axis.set_major_formatter(FixedFormatter([fmt(v) for v in vals]))
+    axis.set_minor_formatter(NullFormatter())
 
 
 def wrap_to_width(fig, text, fontsize, frac=0.97):
@@ -202,7 +278,8 @@ def save(fig, name: str, caption: str, data_files: list[Path]):
     """PNG (300 dpi) + PDF + caption .txt naming the data files; also a large-font pptx with the PNG.
 
     Saved at the exact canvas size (no tight bbox) so that the placed scale is 1.000; refuses to write
-    a figure whose canvas is not the manuscript line width or that carries text below MIN_PT.
+    a figure whose canvas is not the manuscript line width, that carries a text artist below MIN_PT, or
+    whose PDF companion contains a glyph rendered below MIN_PT (mathtext sub/superscripts, F-r003-5).
     """
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     w_in, h_in = fig.get_size_inches()
@@ -219,10 +296,13 @@ def save(fig, name: str, caption: str, data_files: list[Path]):
         print("  TEXT OFF CANVAS:", c)
     if clashes or clipped:
         raise SystemExit(f"{name}: {len(clashes)} overlapping text pairs, {len(clipped)} texts off the canvas")
-    print(f"{name}: canvas {w_in:.3f} x {h_in:.3f} in, smallest text {smallest:.1f} pt (scale 1.000 at placement)")
     png = FIG_DIR / f"{name}.png"
+    pdf = FIG_DIR / f"{name}.pdf"
+    fig.savefig(pdf)  # vector companion first: it is what the rendered-glyph guard measures
+    min_glyph = assert_pdf_min_glyph(pdf, name)  # deletes the pdf and stops if any glyph prints < MIN_PT
     fig.savefig(png)
-    fig.savefig(FIG_DIR / f"{name}.pdf")
+    print(f"{name}: canvas {w_in:.3f} x {h_in:.3f} in, smallest text artist {smallest:.1f} pt, "
+          f"smallest rendered glyph {min_glyph:.4f} pt (scale 1.000 at placement)")
     def rel(p: Path) -> str:
         p = Path(p).resolve()
         return str(p.relative_to(C.ROOT)) if str(p).startswith(str(C.ROOT)) else str(p)

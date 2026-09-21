@@ -8,6 +8,10 @@ scale is 1.000 and the in-box text prints at its generated size (>= 8 pt) instea
 stages are laid out 3 x 2 so that each panel is wide enough for 8.5 pt text. Three checks run before the
 file is written: figkit check_overlaps() (boxes), text inside its own panel, and nothing off the canvas.
 
+F-r003-5: the decoder panel used mathtext ($\\ell_2$), whose subscript printed at 5.95 pt although the text
+artist reported 8.5 pt. It now reads "L2-penalized", and the PDF companion is written first and re-measured
+glyph by glyph with pymupdf (fig_common.assert_pdf_min_glyph) before the PNG is written.
+
 F-r002-4: the matched training fraction is stated as EEGBCI-only (the IV-2a fractions differ).
 Built with the lab's figkit toolkit.
 """
@@ -49,7 +53,7 @@ STAGES = [
     ]),
     ("Decoders", "purple", [
         "CSP+LDA — 6 log-variance features",
-        "TS+LR — OAS covariance, tangent space at the training Fréchet mean, $\\ell_2$ logistic regression (2080 / 253 features)",
+        "TS+LR — OAS covariance, tangent space at the training Fréchet mean, L2-penalized logistic regression (2080 / 253 features)",
         "ShallowFBCSPNet, EEGNet (parameter counts reported)",
     ]),
     ("Protocols", "red", [
@@ -219,9 +223,12 @@ def main() -> int:
     if overlaps or bad or off or small or clashes:
         return 1
     out = OUT_DIR / "fig1_workflow_rev1.png"
+    pdf = out.with_suffix(".pdf")
+    f.fig.savefig(str(pdf), facecolor="white")                   # vector companion first: the glyph guard reads it
+    min_glyph = F.assert_pdf_min_glyph(pdf, "fig1_workflow_rev1")  # F-r003-5: real rendered sizes, mathtext included
     f.fig.savefig(str(out), dpi=300, facecolor="white")          # exact canvas: scale 1.000 at \linewidth
-    f.fig.savefig(str(out.with_suffix(".pdf")), facecolor="white")
-    print(f"fig1_workflow_rev1: canvas {FIG_W_IN:.3f} x {FIG_H_IN:.3f} in, smallest text {BODY_FS:.1f} pt (scale 1.000 at placement)")
+    print(f"fig1_workflow_rev1: canvas {FIG_W_IN:.3f} x {FIG_H_IN:.3f} in, smallest text artist {BODY_FS:.1f} pt, "
+          f"smallest rendered glyph {min_glyph:.4f} pt (scale 1.000 at placement)")
     print("saved", out)
     return 0
 

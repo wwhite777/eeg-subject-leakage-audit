@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
-"""Figure 4 — regularization sweep v2 (E2): both accuracy curves, training accuracy, ||w||, and the
-protocol differences with per-subject points. Paradigm mean over the four EEGBCI paradigms.
+"""Figure 4 — regularization sweep v2 (E2): both accuracy curves, training accuracy, the L2 norm of w, and
+the protocol differences with per-subject points. Paradigm mean over the four EEGBCI paradigms.
+
+Codex r003 finding F-r003-5: the log axes were labelled by the default formatter as 10^{-4} mathtext, whose
+exponent printed at 5.6 pt. The decades are now labelled with plain strings at the full tick size, and
+fig_common.save() re-measures every glyph in the PDF companion before the figure is written.
 Usage: fig4_sweep.py --e2 <per_subject.csv> --tag rev1  (the per-fold CSV is found by name)
 """
 
@@ -19,6 +23,13 @@ import common as C  # noqa: E402
 import fig_common as F  # noqa: E402
 
 PROTOS = ["trial_random", "run_disjoint", "subject_disjoint"]
+# F-r003-5: the default log formatter writes 10^{-4} as mathtext, whose exponent prints at 5.6 pt.
+# These decades are labelled with plain "1e-4" strings instead (fig_common.plain_log_ticks), drawn at the
+# full tick size; the spelling is compact enough not to collide in a 1/3-width panel ("0.0001" does).
+C_TICKS = [1e-4, 1e-2, 1e0, 1e2]
+WNORM_TICKS = [1e-2, 1e-1, 1e0, 1e1, 1e2]
+DEC = lambda v: f"1e{round(np.log10(v)):.0f}"  # noqa: E731  plain decade label, no mathtext
+XLAB = "Inverse penalty C\n(dimensionless)"
 SHORT = {"trial_random": "P0 trial-random", "run_disjoint": "P1 run-disjoint", "subject_disjoint": "P2 subject-disjoint"}
 
 
@@ -60,7 +71,7 @@ def main() -> int:
         ax.plot(Cs, [np.mean(tr_acc[(p, c)]) for c in Cs], ls=":", lw=1.1, color=F.PROTO_COLOR[p])
         cap.append(f"{p}: " + ", ".join(f"C={c:g}: {m:.3f}" for c, m in zip(Cs, means)))
     ax.plot([], [], ls=":", color="black", label="training accuracy")
-    ax.set_xscale("log"); ax.set_xlabel("Inverse penalty C\n(dimensionless)"); ax.set_ylabel("Accuracy\n(fraction correct)")
+    ax.set_xscale("log"); F.plain_log_ticks(ax, "x", C_TICKS, DEC); ax.set_xlabel(XLAB); ax.set_ylabel("Accuracy\n(fraction correct)")
     ax.axhline(0.5, color="#888888", lw=0.8, ls="--"); ax.set_title("(a) test and training\naccuracy")
     handles_a, labels_a = ax.get_legend_handles_labels()
     ax = axes[1]
@@ -78,19 +89,21 @@ def main() -> int:
         ax.plot(Cs, means, marker="o", ms=3.5, color=col, label=lab, zorder=5)
         ax.fill_between(Cs, los, his, color=col, alpha=0.25, linewidth=0, zorder=4)
         cap.append(f"{lab}: " + ", ".join(f"C={c:g}: {m:+.3f} [{lo:+.3f},{hi:+.3f}]" for c, m, lo, hi in zip(Cs, means, los, his)))
-    ax.axhline(0, color="#888888", lw=0.8, ls="--"); ax.set_xscale("log"); ax.set_xlabel("Inverse penalty C\n(dimensionless)"); ax.set_ylabel("Accuracy difference\n(fraction correct)")
+    ax.axhline(0, color="#888888", lw=0.8, ls="--"); ax.set_xscale("log"); F.plain_log_ticks(ax, "x", C_TICKS, DEC); ax.set_xlabel(XLAB); ax.set_ylabel("Accuracy difference\n(fraction correct)")
     ax.legend(loc="upper left", frameon=True); ax.set_title("(b) protocol differences\n(points = subjects)")
     ax = axes[2]
     for p in PROTOS:
         ax.plot(Cs, [np.mean(wn[(p, c)]) for c in Cs], marker="o", ms=3.5, color=F.PROTO_COLOR[p])
-    ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlabel("Inverse penalty C\n(dimensionless)"); ax.set_ylabel("‖w‖₂ (dimensionless)")
+    ax.set_xscale("log"); ax.set_yscale("log")
+    F.plain_log_ticks(ax, "x", C_TICKS, DEC); F.plain_log_ticks(ax, "y", WNORM_TICKS, DEC)
+    ax.set_xlabel(XLAB); ax.set_ylabel("L2 norm of w\n(dimensionless)")
     ax.set_title("(c) weight norm\n")
     fig.legend(handles_a, labels_a, loc="lower center", ncol=4, frameon=False, fontsize=8, columnspacing=1.4, handlelength=1.8, bbox_to_anchor=(0.5, 0.0))
     fig.tight_layout(rect=(0, 0.085, 1, 1), w_pad=1.2)
     caption = ("Figure 4. Regularization sweep of the tangent-space logistic regression on EEGBCI (paradigm mean over four paradigms, 109 subjects). "
                "(a) Test accuracy under P0 trial-random, P1 run-disjoint and P2 subject-disjoint splits (solid, mean with subject-bootstrap 95 % CI band) and the "
-               "corresponding training accuracy (dotted, mean over folds) as a function of the inverse penalty C (larger C = weaker regularization). "
-               "(b) Per-subject differences Δ(P1 − P2) and Δ(P0 − P2) (points = subjects, jittered; line = mean; band = 95 % CI). (c) l2 norm of the fitted weight vector (mean over folds). "
+               "corresponding training accuracy (dotted, mean over folds) as a function of the inverse penalty C (larger C = weaker regularization; C on a logarithmic axis, decades labelled 1e-4 = 0.0001). "
+               "(b) Per-subject differences Δ(P1 − P2) and Δ(P0 − P2) (points = subjects, jittered; line = mean; band = 95 % CI). (c) L2 norm of the fitted weight vector (mean over folds; both axes logarithmic). "
                "Values: " + " | ".join(cap))
     F.save(fig, f"fig4_sweep_{args.tag}", caption, [Path(args.e2)])
     return 0

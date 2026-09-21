@@ -68,11 +68,13 @@ def main() -> int:
         ax.bar(np.arange(4) + (ti - (len(tasks) - 1) / 2) * w, vals, width=w * 0.95, label=C.TASK_SHORT[t], color=["#0072B2", "#56B4E9", "#009E73", "#CC79A7"][ti % 4], linewidth=0)
         group_vals[t] = vals
         cap.append(f"subject-ID {C.TASK_SHORT[t]}: " + ", ".join(f"{l.replace(chr(10), ' ')} {v:.3f}" for l, v in zip(labels, vals)))
-    # D-30: a bar of height zero must not read as "not evaluated" -> print the value over the whole group
+    # D-30: a bar of height zero must not read as "not evaluated" -> print the value over the whole group.
+    # F-r003-3: the printed number is the GROUP MEAN over the four paradigms, exactly as the caption says
+    # (the underlying scores are 0 or 2.04e-4, so the mean rounds to 0.000 but is not identically zero).
     for ci in range(4):
         col = [group_vals[t][ci] for t in tasks if not np.isnan(group_vals[t][ci])]
-        if col and max(col) < 0.0005:
-            ax.text(ci, 0.03, f"{max(col):.3f}", ha="center", va="bottom", fontsize=8, color="#333333")
+        if col and max(col) < 0.0005:  # every bar of the group is invisible at this scale
+            ax.text(ci, 0.03, f"{float(np.mean(col)):.3f}", ha="center", va="bottom", fontsize=8, color="#333333")
     chance = float(a[0]["chance"])
     ax.axhline(chance, color="#888888", lw=0.8, ls="--")
     ax.set_xticks(range(4)); ax.set_xticklabels(labels, fontsize=8); ax.set_ylabel("Subject-identity accuracy\n(fraction correct)"); ax.set_ylim(0, 1.45)
@@ -133,7 +135,7 @@ def main() -> int:
     caption = ("Figure 5. Subject information in the tangent-space features (EEGBCI, 109 subjects). (a) Fraction of the total sum of squares of the tangent features "
                "attributable to subject, class, subject × class (cell means) and residual, in a common tangent space (reference = Fréchet mean of all trials; descriptive only). "
                "(b) Accuracy of a multinomial logistic regression predicting the subject (109 classes) from tangent features under the trial-random (P0) and run-disjoint (P1) splits, "
-               "raw and after removing each subject's feature mean (subject-centred); dashed = chance; the printed 0.000 marks groups that were evaluated and scored zero, not missing bars. (c) Per-subject differences Δ(P1 − P2) and Δ(P0 − P2) for TS+LR (C = 1) with the original features, "
+               "raw and after removing each subject's feature mean (subject-centred); dashed = chance; the subject-centred groups were evaluated, not omitted: their identity accuracy after per-subject centring is printed above the bars as the four-paradigm group mean, which rounds to 0.000. (c) Per-subject differences Δ(P1 − P2) and Δ(P0 − P2) for TS+LR (C = 1) with the original features, "
                "after subtracting each subject's feature mean, and after Riemannian recentering (points = subjects; bar = mean; whisker = 95 % CI). "
                "(d) Alignment of the fitted weight vector w with the subject-specific class-separation directions d_s and with the global direction (points = folds × seeds). Values: " + " | ".join(cap))
     F.save(fig, f"fig5_mechanism_{args.tag}", caption, files)

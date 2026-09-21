@@ -7,6 +7,9 @@ Codex r002 finding F-r002-2: for N < 109 the interval in (c) is a bootstrap over
 averaging the four paradigms within each matching draw (same draw id across paradigms), not over the 40
 paradigm x draw cells; no interval at N = 109, where a single draw exists. N is the number of SAMPLED
 subjects (P2 trains on about 2N/3 of them).
+Codex r003 finding F-r003-5: the logarithmic x axes of (a) and (c) are labelled with the plain d and N
+values (no 10^{x} mathtext, whose exponent printed at 5.6 pt), and fig_common.save() re-measures every
+glyph of the PDF companion before the figure is written.
 Usage: fig6_dimension.py --e4 <per_subject.csv> --e8 <per_draw.csv> --tag rev1
 """
 
@@ -25,6 +28,10 @@ import common as C  # noqa: E402
 import fig_common as F  # noqa: E402
 
 SHORT = {"trial_random": "P0 trial-random", "run_disjoint": "P1 run-disjoint", "subject_disjoint": "P2 subject-disjoint"}
+# F-r003-5: the default log formatter labelled the (a) x axis 10^{1}, 10^{2}, 10^{3} as mathtext, whose
+# exponent printed at 5.6 pt. Both log axes are now labelled with the plain d and N values themselves.
+D_TICKS = [2, 8, 32, 128, 512, 2080]
+INT = lambda v: f"{int(round(v))}"  # noqa: E731  plain integer tick label, no mathtext
 
 
 def main() -> int:
@@ -66,7 +73,8 @@ def main() -> int:
     ax2.axhline(0, color="#E69F00", lw=0.6, ls=":"); ax2.set_ylabel("Δ(P1 − P2)\n(fraction correct)", color="#B07800"); ax2.tick_params(axis="y", colors="#B07800")
     ax2.grid(False)
     cap.append("PCA Δ(P1−P2): " + ", ".join(f"d={d}: {m:+.3f} [{lo:+.3f},{hi:+.3f}]" for d, m, lo, hi in zip(ds, dm, dl, dh)))
-    ax.set_xscale("log"); ax.set_xlabel("Tangent-feature dimension after PCA (count)"); ax.set_ylabel("Accuracy\n(fraction correct)")
+    ax.set_xscale("log"); F.plain_log_ticks(ax, "x", [d for d in D_TICKS if d in ds], INT)
+    ax.set_xlabel("Tangent-feature dimension after PCA (count)"); ax.set_ylabel("Accuracy\n(fraction correct)")
     ax.axhline(0.5, color="#888888", lw=0.8, ls="--"); ax.set_title("(a) PCA-dimension sweep (TS+LR, C = 1)")
     ax.set_ylim(top=0.80)  # headroom for the legend so it never covers a curve
     h1, l1 = ax.get_legend_handles_labels(); h2, l2 = ax2.get_legend_handles_labels()
@@ -122,7 +130,7 @@ def main() -> int:
         ax.fill_between([xs[i] for i in ok], [los[i] for i in ok], [his[i] for i in ok], color=F.MODEL_COLOR[m], alpha=0.2, linewidth=0)
         cap.append(f"{lab} vs N: " + ", ".join((f"N={N}: {mm:+.3f} [{lo:+.3f},{hi:+.3f}] (10 draws)" if lo == lo else f"N={N}: {mm:+.3f} (single draw, no interval)")
                                                for N, mm, lo, hi in zip(xs, means, los, his)))
-    ax.axhline(0, color="#888888", lw=0.8, ls="--"); ax.set_xscale("log"); ax.set_xticks(Ns); ax.set_xticklabels(Ns)
+    ax.axhline(0, color="#888888", lw=0.8, ls="--"); ax.set_xscale("log"); F.plain_log_ticks(ax, "x", Ns, INT)
     ax.set_xlabel("Sampled subjects N (count; P2 trains on about 2N/3 of them)")
     ax.set_ylabel("Δ(P0 − P2)\n(fraction correct)")
     ax.set_ylim(top=ax.get_ylim()[1] + 0.06)  # headroom so the legend never sits on the curves
