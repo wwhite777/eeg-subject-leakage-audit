@@ -30,9 +30,9 @@ def main() -> int:
     rows = C.read_csv(Path(args.e1)) + C.read_csv(Path(args.e10))
     subj = F.seed_avg_subject(rows, ("model", "protocol"))
     models = ["csp_lda", "riemann_ts_lr", "shallow_fbcsp", "eegnet_v4"]
-    fig, axes = plt.subplots(1, 4, figsize=(7.4, 3.0), sharey=True)
+    fig, axes = plt.subplots(2, 2, figsize=(F.FIG_W_IN, 4.6), sharey=True)
     cap = []
-    for ax, m in zip(axes, models):
+    for ax, m in zip(axes.ravel(), models):
         subs = sorted(set().union(*[set(subj.get((m, p), {})) for p in ORDER]))
         for s in subs:
             ys = [subj.get((m, p), {}).get(s, np.nan) for p in ORDER]
@@ -45,11 +45,17 @@ def main() -> int:
             v = np.array(list(d.values()))
             mean, lo, hi = F.mean_ci(ax, xi, v, F.PROTO_COLOR[p], width=0.3)
             cap.append(f"{F.MODEL_LABEL[m]} {p}: {mean:.3f} [{lo:.3f},{hi:.3f}] (n={len(v)})")
-        ax.axhline(0.5, color="#888888", lw=0.8, ls="--"); ax.set_xticks(range(len(ORDER))); ax.set_xticklabels([SHORT[p] for p in ORDER], fontsize=7)
+        ax.axhline(0.5, color="#888888", lw=0.8, ls="--"); ax.set_xticks(range(len(ORDER))); ax.set_xticklabels([SHORT[p] for p in ORDER], fontsize=8)
         ax.set_title(F.MODEL_LABEL[m]); ax.set_ylim(0.35, 1.02); ax.set_xlim(-0.6, len(ORDER) - 0.4)
-    axes[0].set_ylabel("Accuracy (fraction correct)")
-    fig.text(0.5, -0.03, "Protocol: within = session-to-session inside each subject; P0a = trial-random 6-fold; P1 = run-disjoint 6-fold; P0b = trial-random 2-fold; P1s = session-disjoint 2-fold; P2 = leave-one-subject-out\n(BCI-IV-2a, 9 subjects; grey lines connect the same subject; bar = mean, whisker = subject-bootstrap 95 % CI; dashed = chance)", ha="center", fontsize=6.5)
-    fig.tight_layout(w_pad=0.5)
+    for ax in axes[:, 0]:
+        ax.set_ylabel("Accuracy (fraction correct)")
+    for ax in axes[1, :]:
+        ax.set_xlabel("Protocol")
+    foot = ("Protocols: within = session-to-session inside each subject; P0a = trial-random 6-fold; P1 = run-disjoint 6-fold; P0b = trial-random 2-fold; "
+            "P1s = session-disjoint 2-fold; P2 = leave-one-subject-out. BCI-IV-2a, 9 subjects; grey lines connect the same subject; bar = mean, "
+            "whisker = subject-bootstrap 95 % CI; dashed = chance.")
+    fig.text(0.5, 0.012, F.wrap_to_width(fig, foot, 8), ha="center", va="bottom", fontsize=8, color="#333333")
+    fig.tight_layout(rect=(0, 0.115, 1, 1), h_pad=1.0, w_pad=1.2)
     caption = ("Figure S1. BCI-IV-2a left/right motor imagery under the protocol ladder for the four decoders (networks: mean over three seeds). Each grey line follows one of the nine subjects; "
                "the bar is the mean and the whisker the 2000-resample subject-bootstrap 95 % CI; dashed = chance. Training fractions: within-subject 1/2 (one session), trial-random 6-fold 5/6, run-disjoint 5/6, "
                "trial-random 2-fold 1/2, session-disjoint 1/2, LOSO 8/9. Values: " + "; ".join(cap))

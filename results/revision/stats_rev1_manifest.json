@@ -2,7 +2,7 @@
   "run_id": "stats_rev1",
   "command": "test/experiments/revision/e_stats.py --tag rev1 --e1-eegbci results/revision/e1_eegbci_rev1_per_subject.csv --e1-bci2a results/revision/e1_bci2a_rev1_per_subject.csv --e9 results/revision/e9_rev1_all_per_subject.csv --e11 results/revision/e11_rev1_all_per_subject.csv --e10 results/revision/e10_rev1_per_subject.csv --e2 results/revision/e2_rev1_per_subject.csv --e4 results/revision/e4_rev1_per_subject.csv --e5 results/revision/e5_rev1_per_subject.csv --e3c results/revision/e3c_rev1_per_subject.csv --e6 results/revision/e6_rev1_per_subject.csv --e14 results/revision/e14_rev1_per_subject.csv --e7 results/revision/e7_rev1_width_all_per_subject.csv --e8 results/revision/e8_rev1_per_draw.csv --e13-classical results/revision/e1_eegbci_rev1_ztrial_per_subject.csv --e13-deep results/revision/e9_rev1_global_all_per_subject.csv",
   "cwd": "<repo-root>",
-  "git_head": "b75bce0e030c6edb74b63e11cf12f44eb734a15b",
+  "git_head": "d7b13731dfdf333c67a32658153de2c6215929c0",
   "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
   "versions": {
     "python": "3.12.12",
@@ -17,17 +17,17 @@
     "torch": "2.10.0+cu128"
   },
   "hostname": "user",
-  "started_utc": "2026-09-16T10:48:46Z",
-  "finished_utc": "2026-09-16T10:49:00Z",
+  "started_utc": "2026-09-21T02:21:03Z",
+  "finished_utc": "2026-09-21T02:21:18Z",
   "outputs": {
     "results/revision/stats_rev1_ladder_means.csv": "0b65d647dec84450f7d27a5e21a8375bd94081baeb47aa772945712124aa9555",
-    "results/revision/stats_rev1_contrasts.csv": "3bef2f2f094bf35984ffb85fbd47641a08d0e335245746f6e521f20cf72b115d",
-    "results/revision/stats_rev1_e3c_contrasts.csv": "2245c5f266cbaa9bf68566cab530afa9cde513c1daeb7a46618cdc4b2c0d19e1",
-    "results/revision/stats_rev1_e5_contrasts.csv": "818d6b5adef648752e24c1dbdbe754b7c9d77d813ac3430362dd1d67f26ac228",
-    "results/revision/stats_rev1_tost.csv": "465c6773646299d44badf4199323c80143559c1477c215f9d46a147081242e60",
+    "results/revision/stats_rev1_contrasts.csv": "d3bfc93055a47d3faa99370a890eadc82e6c40e5993e063af160dd2dbbe1d723",
+    "results/revision/stats_rev1_e3c_contrasts.csv": "19dd89fe22d71ba0758752aa3b79a74dad0591d7c3e13d4247bd61af872e70cb",
+    "results/revision/stats_rev1_e5_contrasts.csv": "dbfdc4ce13a425729e91353b9f5ab4ad1b173b059a9822700e9b672a50bc05a3",
+    "results/revision/stats_rev1_tost.csv": "840d3c1ea2d1227595edef90f2dead111039648826f7d53380bba038fc61cf53",
     "results/revision/stats_rev1_e2_sweep.csv": "ed61c57bff2695aed2966ebd0eb1662fe633d77c8925962cdbf49660ec478122",
     "results/revision/stats_rev1_e4_sweep.csv": "574d202f8dfce6b970d108562346867202415204684d95abcc1321ec8df87ca2",
-    "results/revision/stats_rev1_factorial.csv": "78bdc141ff6fd841baf52ba4b37620c02a99ebb5482ac8a54b6de69f2a8db10d",
+    "results/revision/stats_rev1_factorial.csv": "4df3f5276f8626eb822874f35ad965fbaa439305ba5f68941b5b73841aaa677e",
     "results/revision/stats_rev1_width.csv": "32bee516a78a24cabb0b42c4b5e3376cff6b9ea1a7b11df5a5996aa6d55cd929"
   },
   "args": {

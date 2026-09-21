@@ -18,6 +18,7 @@ import fig_common as F  # noqa: E402
 
 ORDER = ["lr", "slda", "linsvm", "ridge", "knn", "mdm"]
 LABEL = {"lr": "LR (l2, C=1)", "slda": "shrinkage LDA", "linsvm": "linear SVM", "ridge": "ridge", "knn": "k-NN (k=5)", "mdm": "MDM (covariances)"}
+TICK = {"lr": "LR", "slda": "sLDA", "linsvm": "SVM", "ridge": "ridge", "knn": "k-NN", "mdm": "MDM"}  # 8 pt tick labels; expanded in the caption
 
 
 def main() -> int:
@@ -30,7 +31,7 @@ def main() -> int:
     subj = F.seed_avg_subject(rows, ("task", "clf", "protocol"))
     pm = F.paradigm_mean(subj, 0)
     clfs = [c for c in ORDER if any(k[1] == c for k in pm)]
-    fig, axes = plt.subplots(1, 2, figsize=(7.4, 2.8))
+    fig, axes = plt.subplots(1, 2, figsize=(F.FIG_W_IN, 3.2))
     rng = np.random.default_rng(C.SEED)
     cap = []
     ax = axes[0]
@@ -42,8 +43,12 @@ def main() -> int:
             m, lo, hi = F.mean_ci(ax, xi + off, d, col, width=0.15)
             cap.append(f"{LABEL[c]} Δ({'P1' if pa == 'run_disjoint' else 'P0'}−P2) {m:+.3f} [{lo:+.3f},{hi:+.3f}]")
     ax.scatter([], [], color="#E69F00", label="Δ(P1 − P2)"); ax.scatter([], [], color="#D55E00", label="Δ(P0 − P2)")
-    ax.axhline(0, color="#888888", lw=0.8, ls="--"); ax.set_xticks(range(len(clfs))); ax.set_xticklabels([LABEL[c] for c in clfs], fontsize=6, rotation=20, ha="right")
-    ax.set_ylabel("Accuracy difference (fraction correct)"); ax.legend(loc="upper right", frameon=True, fontsize=6.5); ax.set_title("(a) protocol differences per classifier (points = subjects)")
+    ax.axhline(0, color="#888888", lw=0.8, ls="--"); ax.set_xticks(range(len(clfs))); ax.set_xticklabels([TICK[c] for c in clfs], fontsize=8)
+    ax.set_xlabel("Classifier on identical tangent features")
+    ax.set_ylabel("Accuracy difference\n(fraction correct)")
+    ax.set_ylim(top=ax.get_ylim()[1] + 0.10)
+    ax.legend(loc="upper center", ncol=2, frameon=True, handlelength=1.0, handletextpad=0.5, columnspacing=1.0)
+    ax.set_title("(a) protocol differences per\nclassifier (points = subjects)")
     ax = axes[1]
     for xi, c in enumerate(clfs):
         for p, off in (("trial_random", -0.22), ("run_disjoint", 0.0), ("subject_disjoint", 0.22)):
@@ -51,13 +56,22 @@ def main() -> int:
             F.strip_points(ax, xi + off, v, F.PROTO_COLOR[p], rng, width=0.08, size=5)
             m, lo, hi = F.mean_ci(ax, xi + off, v, F.PROTO_COLOR[p], width=0.1)
             cap.append(f"{LABEL[c]} {p} {m:.3f} [{lo:.3f},{hi:.3f}]")
-    for p in ("trial_random", "run_disjoint", "subject_disjoint"):
-        ax.scatter([], [], color=F.PROTO_COLOR[p], label=F.PROTO_LABEL[p])
-    ax.axhline(0.5, color="#888888", lw=0.8, ls="--"); ax.set_xticks(range(len(clfs))); ax.set_xticklabels([LABEL[c] for c in clfs], fontsize=6, rotation=20, ha="right")
-    ax.set_ylabel("Accuracy (fraction correct)"); ax.legend(loc="lower right", frameon=True, fontsize=6.5); ax.set_title("(b) accuracy per protocol")
-    fig.tight_layout(w_pad=0.8)
-    caption = ("Figure S2. Six classifiers applied to identical inductive tangent-space features of EEGBCI (paradigm mean, 109 subjects; MDM operates on the covariance matrices directly). "
-               "(a) Per-subject differences Δ(P1 − P2) and Δ(P0 − P2) (points = subjects; bar = mean; whisker = subject-bootstrap 95 % CI; dashed = 0). (b) Accuracy under the three ladder protocols. Values: " + " | ".join(cap))
+    for p, lab in (("trial_random", "P0 trial-random"), ("run_disjoint", "P1 run-disjoint"), ("subject_disjoint", "P2 subject-disjoint")):
+        ax.scatter([], [], color=F.PROTO_COLOR[p], label=lab)
+    ax.axhline(0.5, color="#888888", lw=0.8, ls="--"); ax.set_xticks(range(len(clfs))); ax.set_xticklabels([TICK[c] for c in clfs], fontsize=8)
+    ax.set_xlabel("Classifier on identical tangent features")
+    ax.set_ylabel("Accuracy\n(fraction correct)")
+    lo_y, hi_y = ax.get_ylim()
+    ax.set_yticks(np.arange(np.ceil(lo_y * 10) / 10, hi_y + 1e-9, 0.1))  # keep the top tick clear of the legend box
+    ax.set_ylim(lo_y, hi_y + 0.22)
+    ax.legend(loc="upper center", ncol=2, frameon=True, handlelength=1.0, handletextpad=0.5, columnspacing=1.0)
+    ax.set_title("(b) accuracy per protocol\n")
+    fig.tight_layout(w_pad=1.2)
+    caption = ("Figure S2. Six classifiers applied to identical inductive tangent-space features of EEGBCI (paradigm mean over the four paradigms, 109 subjects; MDM operates on the covariance matrices directly). "
+               "(a) Per-subject differences Δ(P1 − P2) and Δ(P0 − P2) (points = subjects; bar = mean; whisker = subject-bootstrap 95 % CI; dashed = 0). (b) Accuracy under the three ladder protocols. "
+               "Axis keys: LR = l2-penalized logistic regression (C = 1); sLDA = shrinkage linear discriminant analysis; SVM = linear support vector machine; ridge = ridge classifier; "
+               "k-NN = k-nearest neighbours (k = 5); MDM = minimum distance to the Riemannian mean; P0 = trial-random 3-fold; P1 = run-disjoint, subject-overlapping 3-fold; P2 = subject-disjoint 3-fold. "
+               "Values: " + " | ".join(cap))
     F.save(fig, f"figS2_classifiers_{args.tag}", caption, [Path(args.e5)])
     return 0
 

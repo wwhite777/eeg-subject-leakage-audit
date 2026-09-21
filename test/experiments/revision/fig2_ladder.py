@@ -4,6 +4,7 @@
 Inputs (per-subject CSVs): e1 eegbci (CSP+LDA, TS+LR; within/trial/run/subject), e9 t12+t34 (networks;
 trial/run/subject), e11 t12+t34 (networks within-subject). Each subject's accuracy is averaged over
 seeds and then over the four paradigms (paradigm mean). Mean and subject-bootstrap 95 % CI per protocol.
+Drawn on a 2 x 2 grid at the manuscript \\linewidth (6.024 in) so that no text prints below 8 pt (D-11).
 Usage: fig2_ladder.py --e1 <csv> --e9 <csv,csv> --e11 <csv,csv> --tag rev1
 """
 
@@ -43,29 +44,35 @@ def main() -> int:
     subj = F.seed_avg_subject(rows, ("task", "model", "protocol"))
     pm = F.paradigm_mean(subj, 0)
     models = ["csp_lda", "riemann_ts_lr", "shallow_fbcsp", "eegnet_v4"]
-    fig, axes = plt.subplots(1, 4, figsize=(7.4, 2.9), sharey=True)
+    fig, axes = plt.subplots(2, 2, figsize=(F.FIG_W_IN, 4.6), sharey=True)
     rng = np.random.default_rng(C.SEED)
     caption_bits = []
-    for ax, m in zip(axes, models):
+    for ax, m in zip(axes.ravel(), models):
         for xi, p in enumerate(ORDER):
             d = pm.get(("paradigm_mean", m, p), {})
             if not d:
-                ax.text(xi, 0.52, "not\nevaluated", ha="center", va="center", fontsize=6.5, color="#666666")
+                ax.text(xi, 0.52, "not\nevaluated", ha="center", va="center", fontsize=8, color="#666666")
                 continue
             v = np.array([d[s] for s in sorted(d)])
             F.strip_points(ax, xi, v, F.PROTO_COLOR[p], rng)
             mean, lo, hi = F.mean_ci(ax, xi, v, F.PROTO_COLOR[p])
-            ax.text(xi, 0.985, f"{mean:.3f}", ha="center", va="top", fontsize=6.5)
+            ax.text(xi, 1.045, f"{mean:.3f}", ha="center", va="top", fontsize=8)
             caption_bits.append(f"{F.MODEL_LABEL[m]} {p}: {mean:.3f} [{lo:.3f}, {hi:.3f}] (n={len(v)})")
         ax.axhline(0.5, color="#888888", lw=0.8, ls="--", zorder=1)
         ax.set_xticks(range(len(ORDER)))
-        ax.set_xticklabels([SHORT[p] for p in ORDER], fontsize=7)
+        ax.set_xticklabels([SHORT[p] for p in ORDER], fontsize=8)
         ax.set_title(F.MODEL_LABEL[m])
-        ax.set_ylim(0.3, 1.0)
+        ax.set_ylim(0.3, 1.06)
         ax.set_xlim(-0.6, len(ORDER) - 0.4)
-    axes[0].set_ylabel("Accuracy (fraction correct, paradigm mean)")
-    fig.text(0.5, -0.03, "Protocol: within = leave-one-run-out inside each subject; P0 = trial-random 3-fold; P1 = run-disjoint, subject-overlapping 3-fold; P2 = subject-disjoint 3-fold\n(EEGBCI, 109 subjects; each point = one subject; bar = mean, whisker = subject-bootstrap 95 % CI; dashed = chance 0.5)", ha="center", fontsize=6.5)
-    fig.tight_layout(w_pad=0.6)
+    for ax in axes[:, 0]:
+        ax.set_ylabel("Accuracy (fraction correct,\nparadigm mean)")
+    for ax in axes[1, :]:
+        ax.set_xlabel("Protocol")
+    foot = ("Protocols: within = leave-one-run-out inside each subject; P0 = trial-random 3-fold; P1 = run-disjoint, subject-overlapping 3-fold; "
+            "P2 = subject-disjoint 3-fold. EEGBCI, 109 subjects; each point = one subject; bar = mean, whisker = subject-bootstrap 95 % CI; "
+            "dashed line = chance (0.5).")
+    fig.text(0.5, 0.012, F.wrap_to_width(fig, foot, 8), ha="center", va="bottom", fontsize=8, color="#333333")
+    fig.tight_layout(rect=(0, 0.105, 1, 1), h_pad=1.0, w_pad=1.2)
     caption = ("Figure 2. Accuracy of the four decoders on EEGBCI under the protocol ladder. Each point is one subject's accuracy "
                "(fraction of its test trials predicted correctly, averaged over partition seeds and over the four paradigms); the horizontal bar is the "
                "mean over 109 subjects and the whisker its 2000-resample subject-bootstrap 95 % CI; the dashed line is chance (0.5). "

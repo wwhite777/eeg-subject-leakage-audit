@@ -54,8 +54,9 @@ def contrast(subj_a: dict[int, float], subj_b: dict[int, float], seed=C.SEED) ->
     d = a - b
     lo, hi = C.bootstrap_ci(d, seed=seed)
     W, p = C.wilcoxon_paired(a, b)
+    dr = np.round(d, C.ROUND_DECIMALS)  # sign counts use the same rounded vector as the tests (zeros are ties)
     return {"n": len(subs), "mean_a": a.mean(), "mean_b": b.mean(), "mean_diff": d.mean(), "ci_low": lo, "ci_high": hi,
-            "wilcoxon_W": W, "p_wilcoxon": p, "p_signflip": C.signflip_perm_p(d, seed=seed), "n_positive": int(np.sum(d > 0)), "n_negative": int(np.sum(d < 0))}
+            "wilcoxon_W": W, "p_wilcoxon": p, "p_signflip": C.signflip_perm_p(d, seed=seed), "n_positive": int(np.sum(dr > 0)), "n_negative": int(np.sum(dr < 0)), "n_zero": int(np.sum(dr == 0))}
 
 
 def by_group(subj_acc: dict, prefix: tuple) -> dict[int, float]:
@@ -155,7 +156,7 @@ def main() -> int:
                 if dataset == "eegbci" and task == "paradigm_mean" and name in displayed_eegbci:
                     key = "tableS8_preprocessing_control" if control else "table3_eegbci"
                 elif dataset == "eegbci" and task != "paradigm_mean" and name in displayed_eegbci and not control:
-                    key = f"tableS1_{task}"
+                    key = "tableS1_eegbci_paradigms"  # one family = all 48 contrasts displayed in table S1
                 elif dataset == "bci2a" and name in displayed_bci2a:
                     key = "table4_bci2a"
                 else:
@@ -246,6 +247,9 @@ def main() -> int:
             out.append({"analysis": label, "dataset": "eegbci", "task": "paradigm_mean", "n": len(allv), "mean_delta": C.fmt(np.mean(allv)), "ci_low": C.fmt(lo), "ci_high": C.fmt(hi),
                         "p_wilcoxon": C.fmt(C.wilcoxon_paired(np.array(allv), np.zeros(len(allv)))[1]), **{f"tost_{k}": C.fmt(v) for k, v in t.items()}})
     if out:
+        adj = C.holm([float(r["p_wilcoxon"]) for r in out])
+        for r, a in zip(out, adj):
+            r["p_wilcoxon_holm"] = C.fmt(a); r["wilcoxon_family_size"] = len(out)
         outputs.append(C.write_csv(R / f"stats_{args.tag}_tost.csv", out))
         for r in out:
             print(f"  {r['analysis'][:3]} {r['dataset']:6s} {r['task']:26s} Δ={float(r['mean_delta']):+.5f} CI[{float(r['ci_low']):+.5f},{float(r['ci_high']):+.5f}] TOST equivalent={r['tost_equivalent']} (90%CI [{float(r['tost_ci90_low']):+.5f},{float(r['tost_ci90_high']):+.5f}])")
@@ -340,15 +344,20 @@ def main() -> int:
                 # draw-cluster bootstrap: a draw (its subject subset) is resampled with all of its d cells together
                 rng = np.random.default_rng(C.SEED)
                 clusters = np.array(CL)
-                uniq = sorted(set(clusters))
+                by_N = defaultdict(list)  # stratified: draw ids resampled within each N, every d cell of a draw kept together
+                for u in sorted(set(clusters)):
+                    by_N[u.split("_")[0]].append(u)
                 boots = []
                 for _ in range(2000):
-                    pick = rng.choice(uniq, size=len(uniq), replace=True)
-                    idx = np.concatenate([np.where(clusters == u)[0] for u in pick])
+                    idx = []
+                    for Nkey, us in by_N.items():
+                        pick = rng.choice(us, size=len(us), replace=True)
+                        idx.extend(np.concatenate([np.where(clusters == u)[0] for u in pick]))
+                    idx = np.array(idx)
                     boots.append(np.linalg.lstsq(X[idx], Y[idx], rcond=None)[0])
                 boots = np.array(boots)
                 for name, j in (("intercept_at_grid_centre", 0), ("log2N", 1), ("log2d", 2), ("log2N_x_log2d", 3)):
-                    out.append({"task": task, "model": "riemann_ts_lr", "N": "ols", "d": name, "n_draws": len(Y), "inflation_mean": C.fmt(beta[j]),
+                    out.append({"task": task, "model": "riemann_ts_lr", "N": "ols", "d": name, "n_draws": "", "n_obs": len(Y), "inflation_mean": C.fmt(beta[j]),
                                 "ci_low": C.fmt(np.percentile(boots[:, j], 2.5)), "ci_high": C.fmt(np.percentile(boots[:, j], 97.5)), "sd": ""})
         outputs.append(C.write_csv(R / f"stats_{args.tag}_factorial.csv", out))
         for r in out:

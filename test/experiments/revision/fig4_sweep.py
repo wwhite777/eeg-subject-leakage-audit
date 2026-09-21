@@ -19,6 +19,7 @@ import common as C  # noqa: E402
 import fig_common as F  # noqa: E402
 
 PROTOS = ["trial_random", "run_disjoint", "subject_disjoint"]
+SHORT = {"trial_random": "P0 trial-random", "run_disjoint": "P1 run-disjoint", "subject_disjoint": "P2 subject-disjoint"}
 
 
 def main() -> int:
@@ -43,7 +44,7 @@ def main() -> int:
     for r in pf:
         tr_acc[(r["protocol"], float(r["C"]))].append(float(r["train_acc"]))
         wn[(r["protocol"], float(r["C"]))].append(float(r["w_norm"]))
-    fig, axes = plt.subplots(1, 3, figsize=(7.4, 2.7))
+    fig, axes = plt.subplots(1, 3, figsize=(F.FIG_W_IN, 3.5))
     rng = np.random.default_rng(C.SEED)
     cap = []
     ax = axes[0]
@@ -54,13 +55,14 @@ def main() -> int:
             m = v.mean()
             lo, hi = C.bootstrap_ci(v)
             means.append(m); los.append(lo); his.append(hi)
-        ax.plot(Cs, means, marker="o", ms=3.5, color=F.PROTO_COLOR[p], label=F.PROTO_LABEL[p])
+        ax.plot(Cs, means, marker="o", ms=3.5, color=F.PROTO_COLOR[p], label=SHORT[p])
         ax.fill_between(Cs, los, his, color=F.PROTO_COLOR[p], alpha=0.18, linewidth=0)
         ax.plot(Cs, [np.mean(tr_acc[(p, c)]) for c in Cs], ls=":", lw=1.1, color=F.PROTO_COLOR[p])
         cap.append(f"{p}: " + ", ".join(f"C={c:g}: {m:.3f}" for c, m in zip(Cs, means)))
-    ax.plot([], [], ls=":", color="black", label="training accuracy (dotted)")
-    ax.set_xscale("log"); ax.set_xlabel("Inverse penalty C (dimensionless)"); ax.set_ylabel("Accuracy (fraction correct)")
-    ax.axhline(0.5, color="#888888", lw=0.8, ls="--"); ax.legend(loc="upper right", bbox_to_anchor=(1.0, 0.93), frameon=True, fontsize=6); ax.set_title("(a) test (solid) and training (dotted) accuracy")
+    ax.plot([], [], ls=":", color="black", label="training accuracy")
+    ax.set_xscale("log"); ax.set_xlabel("Inverse penalty C\n(dimensionless)"); ax.set_ylabel("Accuracy\n(fraction correct)")
+    ax.axhline(0.5, color="#888888", lw=0.8, ls="--"); ax.set_title("(a) test and training\naccuracy")
+    handles_a, labels_a = ax.get_legend_handles_labels()
     ax = axes[1]
     for pa, pb, col, lab in (("run_disjoint", "subject_disjoint", "#E69F00", "Δ(P1 − P2)"), ("trial_random", "subject_disjoint", "#D55E00", "Δ(P0 − P2)")):
         means, los, his = [], [], []
@@ -76,14 +78,15 @@ def main() -> int:
         ax.plot(Cs, means, marker="o", ms=3.5, color=col, label=lab, zorder=5)
         ax.fill_between(Cs, los, his, color=col, alpha=0.25, linewidth=0, zorder=4)
         cap.append(f"{lab}: " + ", ".join(f"C={c:g}: {m:+.3f} [{lo:+.3f},{hi:+.3f}]" for c, m, lo, hi in zip(Cs, means, los, his)))
-    ax.axhline(0, color="#888888", lw=0.8, ls="--"); ax.set_xscale("log"); ax.set_xlabel("Inverse penalty C (dimensionless)"); ax.set_ylabel("Accuracy difference (fraction correct)")
-    ax.legend(loc="upper left", frameon=True, fontsize=6); ax.set_title("(b) protocol differences (points = subjects)")
+    ax.axhline(0, color="#888888", lw=0.8, ls="--"); ax.set_xscale("log"); ax.set_xlabel("Inverse penalty C\n(dimensionless)"); ax.set_ylabel("Accuracy difference\n(fraction correct)")
+    ax.legend(loc="upper left", frameon=True); ax.set_title("(b) protocol differences\n(points = subjects)")
     ax = axes[2]
     for p in PROTOS:
-        ax.plot(Cs, [np.mean(wn[(p, c)]) for c in Cs], marker="o", ms=3.5, color=F.PROTO_COLOR[p], label=F.PROTO_LABEL[p])
-    ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlabel("Inverse penalty C (dimensionless)"); ax.set_ylabel("‖w‖₂ (dimensionless)")
-    ax.legend(loc="upper left", frameon=True, fontsize=6); ax.set_title("(c) weight norm")
-    fig.tight_layout(w_pad=0.8)
+        ax.plot(Cs, [np.mean(wn[(p, c)]) for c in Cs], marker="o", ms=3.5, color=F.PROTO_COLOR[p])
+    ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlabel("Inverse penalty C\n(dimensionless)"); ax.set_ylabel("‖w‖₂ (dimensionless)")
+    ax.set_title("(c) weight norm\n")
+    fig.legend(handles_a, labels_a, loc="lower center", ncol=4, frameon=False, fontsize=8, columnspacing=1.4, handlelength=1.8, bbox_to_anchor=(0.5, 0.0))
+    fig.tight_layout(rect=(0, 0.085, 1, 1), w_pad=1.2)
     caption = ("Figure 4. Regularization sweep of the tangent-space logistic regression on EEGBCI (paradigm mean over four paradigms, 109 subjects). "
                "(a) Test accuracy under P0 trial-random, P1 run-disjoint and P2 subject-disjoint splits (solid, mean with subject-bootstrap 95 % CI band) and the "
                "corresponding training accuracy (dotted, mean over folds) as a function of the inverse penalty C (larger C = weaker regularization). "

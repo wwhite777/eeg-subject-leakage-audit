@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Statistics for the calibration-size curve (E12, plan B14): per model and k, mean accuracy over subjects (draw-averaged,
 paradigm mean over the paradigms present) with subject-bootstrap CI; paired difference k vs k = 0 with Wilcoxon,
-sign-flip and Holm (family = one model); reference values: within-subject and subject-disjoint (P2) accuracy of the
+sign-flip and Holm over the 12 k>0 contrasts of the displayed calibration table (one family); reference values: within-subject and subject-disjoint (P2) accuracy of the
 same decoder on the same paradigms.
 Usage: e12_stats.py --tag rev1 --e12 <csv,csv> --e1 <e1 eegbci per_subject.csv> --e11 <csv,csv> --e9 <csv,csv>
 """
@@ -48,7 +48,7 @@ def main() -> int:
         fam = []
         for k in ks:
             d = pm[("paradigm_mean", model, str(k))]
-            v = np.array(list(d.values()))
+            v = np.array([d[s] for s in sorted(d)])  # sorted subjects: deterministic bootstrap order
             lo, hi = C.bootstrap_ci(v)
             subs = sorted(set(d) & set(base))
             diff = np.array([d[s] - base[s] for s in subs])
@@ -62,7 +62,7 @@ def main() -> int:
         for proto in ("within_subject", "subject_disjoint"):
             d = ref.get(("paradigm_mean", model, proto))
             if d:
-                v = np.array(list(d.values())); lo, hi = C.bootstrap_ci(v)
+                v = np.array([d[s] for s in sorted(d)]); lo, hi = C.bootstrap_ci(v)
                 out.append({"model": model, "k": f"ref_{proto}", "n": len(v), "mean_acc": C.fmt(v.mean()), "ci_low": C.fmt(lo), "ci_high": C.fmt(hi),
                             "diff_vs_k0": "", "diff_ci_low": "", "diff_ci_high": "", "p_wilcoxon": "", "p_signflip": "", "p_holm": ""})
         for row in out:

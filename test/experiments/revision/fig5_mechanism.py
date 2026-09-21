@@ -18,6 +18,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import common as C  # noqa: E402
 import fig_common as F  # noqa: E402
+from matplotlib.lines import Line2D  # noqa: E402
 
 
 def main() -> int:
@@ -32,7 +33,7 @@ def main() -> int:
     plt = F.setup_mpl()
     files = [Path(args.e3a), Path(args.e3b), Path(args.e3c), Path(args.e3d), Path(args.e1)]
     rng = np.random.default_rng(C.SEED)
-    fig, axes = plt.subplots(2, 2, figsize=(7.4, 5.4))
+    fig, axes = plt.subplots(2, 2, figsize=(F.FIG_W_IN, 5.2))
     cap = []
     # (a) variance decomposition
     ax = axes[0, 0]
@@ -43,31 +44,42 @@ def main() -> int:
         for key, lab, col in comps:
             v = float(r[key])
             ax.bar(i, v, bottom=bottom, color=col, width=0.7, label=lab if i == 0 else None, linewidth=0)
-            if v > 0.06:
-                ax.text(i, bottom + v / 2, f"{v:.2f}", ha="center", va="center", fontsize=6.5, color="white" if key != "frac_residual" else "black")
+            if v > 0.10:  # only label a segment tall enough to hold 8 pt text
+                ax.text(i, bottom + v / 2, f"{v:.2f}", ha="center", va="center", fontsize=8, color="white" if key != "frac_residual" else "black")
             bottom += v
         cap.append(f"{C.TASK_SHORT[r['task']]}: subject {float(r['frac_subject']):.3f}, class {float(r['frac_class']):.3f}, subject×class {float(r['frac_subject_x_class']):.3f}, residual {float(r['frac_residual']):.3f}")
-    ax.set_xticks(range(len(b))); ax.set_xticklabels([C.TASK_SHORT[r["task"]] for r in b], fontsize=6.5)
-    ax.set_ylabel("Fraction of total sum of squares (dimensionless)"); ax.set_ylim(0, 1.18); ax.legend(loc="upper center", ncol=4, frameon=False, fontsize=6.5, bbox_to_anchor=(0.5, 1.0))
-    ax.set_title("(a) variance decomposition of tangent features", pad=14)
+    ax.set_xticks(range(len(b))); ax.set_xticklabels([C.TASK_SHORT[r["task"]].replace(" ", "\n").replace("fists/feet", "fists/\nfeet") for r in b], fontsize=8)
+    ax.set_ylabel("Fraction of total sum\nof squares (dimensionless)"); ax.set_ylim(0, 1.42)
+    ax.legend(loc="upper center", ncol=2, frameon=False, bbox_to_anchor=(0.5, 1.03), columnspacing=1.0, handlelength=1.2, handletextpad=0.5)
+    ax.set_title("(a) variance decomposition\nof tangent features")
     # (b) subject-ID decoding
     ax = axes[0, 1]
     a = C.read_csv(Path(args.e3a))
     conds = [("trial_random", "False"), ("trial_random", "True"), ("run_disjoint", "False"), ("run_disjoint", "True")]
-    labels = ["trial-random\nraw", "trial-random\nsubject-centred", "run-disjoint\nraw", "run-disjoint\nsubject-centred"]
+    labels = ["P0\nraw", "P0\nsubject-\ncentred", "P1\nraw", "P1\nsubject-\ncentred"]
     tasks = sorted({r["task"] for r in a}, key=C.TASKS.index)
     w = 0.8 / max(1, len(tasks))
+    group_vals = {}
     for ti, t in enumerate(tasks):
         vals = []
         for split, cen in conds:
             rr = [r for r in a if r["task"] == t and r["split"] == split and r["centered"] == cen]
             vals.append(float(rr[0]["subject_id_accuracy"]) if rr else np.nan)
         ax.bar(np.arange(4) + (ti - (len(tasks) - 1) / 2) * w, vals, width=w * 0.95, label=C.TASK_SHORT[t], color=["#0072B2", "#56B4E9", "#009E73", "#CC79A7"][ti % 4], linewidth=0)
+        group_vals[t] = vals
         cap.append(f"subject-ID {C.TASK_SHORT[t]}: " + ", ".join(f"{l.replace(chr(10), ' ')} {v:.3f}" for l, v in zip(labels, vals)))
+    # D-30: a bar of height zero must not read as "not evaluated" -> print the value over the whole group
+    for ci in range(4):
+        col = [group_vals[t][ci] for t in tasks if not np.isnan(group_vals[t][ci])]
+        if col and max(col) < 0.0005:
+            ax.text(ci, 0.03, f"{max(col):.3f}", ha="center", va="bottom", fontsize=8, color="#333333")
     chance = float(a[0]["chance"])
-    ax.axhline(chance, color="#888888", lw=0.8, ls="--"); ax.text(3.45, chance + 0.01, f"chance {chance:.3f}", fontsize=6, ha="right")
-    ax.set_xticks(range(4)); ax.set_xticklabels(labels, fontsize=6.5); ax.set_ylabel("Subject-identity accuracy (fraction correct)"); ax.set_ylim(0, 1)
-    ax.legend(loc="center right", frameon=True, fontsize=6.5); ax.set_title("(b) decoding subject identity from tangent features")
+    ax.axhline(chance, color="#888888", lw=0.8, ls="--")
+    ax.set_xticks(range(4)); ax.set_xticklabels(labels, fontsize=8); ax.set_ylabel("Subject-identity accuracy\n(fraction correct)"); ax.set_ylim(0, 1.45)
+    hb, lb = ax.get_legend_handles_labels()
+    hb.append(Line2D([], [], color="#888888", lw=0.8, ls="--")); lb.append(f"chance ({chance:.3f})")
+    ax.legend(hb, lb, loc="upper center", ncol=2, frameon=False, bbox_to_anchor=(0.5, 1.03), columnspacing=1.0, handlelength=1.2, handletextpad=0.5)
+    ax.set_title("(b) decoding subject identity\nfrom tangent features")
     # (c) mean removal / recentering
     ax = axes[1, 0]
     e1 = [r for r in C.read_csv(Path(args.e1)) if r["model"] == "riemann_ts_lr"]
@@ -76,7 +88,7 @@ def main() -> int:
     c3 = C.read_csv(Path(args.e3c))
     subj = F.seed_avg_subject(e1 + c3, ("task", "variant", "protocol"))
     pm = F.paradigm_mean(subj, 0)
-    variants = [("original", "original"), ("feature_centered", "subject-mean\nremoved"), ("riemann_recentered", "Riemannian\nrecentred")]
+    variants = [("original", "original"), ("feature_centered", "subject\nmean\nremoved"), ("riemann_recentered", "Riemannian\nrecentred")]
     for xi, (v, lab) in enumerate(variants):
         for k, (pa, pb, col, off) in enumerate((("run_disjoint", "subject_disjoint", "#E69F00", -0.18), ("trial_random", "subject_disjoint", "#D55E00", 0.18))):
             A, B = pm.get(("paradigm_mean", v, pa), {}), pm.get(("paradigm_mean", v, pb), {})
@@ -88,12 +100,13 @@ def main() -> int:
             m, lo, hi = F.mean_ci(ax, xi + off, d, col, width=0.15)
             cap.append(f"{v} Δ({'P1' if pa == 'run_disjoint' else 'P0'}−P2) {m:+.3f} [{lo:+.3f},{hi:+.3f}] n={len(d)}")
     ax.scatter([], [], color="#E69F00", label="Δ(P1 − P2)"); ax.scatter([], [], color="#D55E00", label="Δ(P0 − P2)")
-    ax.axhline(0, color="#888888", lw=0.8, ls="--"); ax.set_xticks(range(3)); ax.set_xticklabels([l for _, l in variants], fontsize=6.5)
-    ax.set_ylabel("Accuracy difference (fraction correct)"); ax.legend(loc="upper right", frameon=True, fontsize=6.5); ax.set_title("(c) TS+LR after removing subject means")
+    ax.axhline(0, color="#888888", lw=0.8, ls="--"); ax.set_xticks(range(3)); ax.set_xticklabels([l for _, l in variants], fontsize=8)
+    ax.set_ylabel("Accuracy difference\n(fraction correct)"); ax.legend(loc="upper right", frameon=True, handlelength=1.2, handletextpad=0.5)
+    ax.set_title("(c) TS+LR after removing\nsubject means")
     # (d) weight alignment
     ax = axes[1, 1]
     d3 = C.read_csv(Path(args.e3d))
-    metrics = [("mean_abs_cos_w_d_s_train_subjects", "mean |cos(w, d_s)|\n(training subjects)"), ("fraction_w_in_span_train_d_s", "fraction of ‖w‖²\nin span{d_s}"), ("abs_cos_w_d_global", "|cos(w, d_global)|")]
+    metrics = [("mean_abs_cos_w_d_s_train_subjects", "|cos(w, d_s)|"), ("fraction_w_in_span_train_d_s", "‖w‖² in\nspan{d_s}"), ("abs_cos_w_d_global", "|cos(w,\nd_global)|")]
     for xi, (met, lab) in enumerate(metrics):
         for pa, col, off in (("trial_random", "#D55E00", -0.18), ("subject_disjoint", "#0072B2", 0.18)):
             v = np.array([float(r["value"]) for r in d3 if r["metric"] == met and r["protocol"] == pa])
@@ -104,18 +117,23 @@ def main() -> int:
             cap.append(f"{met} {pa}: {m:.3f} [{lo:.3f},{hi:.3f}] n={len(v)} folds")
     base = [float(r["value"]) for r in d3 if r["metric"] == "random_direction_fraction_in_span"]
     if base:
-        ax.hlines(np.mean(base), 0.6, 1.4, color="#888888", ls="--", lw=0.8); ax.text(1.42, np.mean(base), f"random\n{np.mean(base):.3f}", fontsize=6, va="center")
+        ax.hlines(np.mean(base), 0.55, 1.45, color="#888888", ls="--", lw=0.8)
     pw = [float(r["value"]) for r in d3 if r["metric"] == "mean_pairwise_abs_cos_d_s"]
     if pw:
         cap.append(f"mean pairwise |cos(d_s, d_s')| over paradigms = {np.mean(pw):.3f}")
-    ax.scatter([], [], color="#D55E00", label="w trained under P0 (trial-random)"); ax.scatter([], [], color="#0072B2", label="w trained under P2 (subject-disjoint)")
-    ax.set_xticks(range(3)); ax.set_xticklabels([l for _, l in metrics], fontsize=6.5); ax.set_ylabel("Alignment (dimensionless)")
-    ax.legend(loc="upper right", frameon=True, fontsize=6.5); ax.set_title(f"(d) weight alignment (points = folds × seeds)")
-    fig.tight_layout(h_pad=1.2, w_pad=0.8)
+    ax.scatter([], [], color="#D55E00", label="w from P0 (trial-random)"); ax.scatter([], [], color="#0072B2", label="w from P2 (subject-disjoint)")
+    ax.set_xticks(range(3)); ax.set_xticklabels([l for _, l in metrics], fontsize=8); ax.set_ylabel("Alignment (dimensionless)")
+    ax.set_ylim(top=1.30)
+    hd, ld = ax.get_legend_handles_labels()
+    if base:
+        hd.append(Line2D([], [], color="#888888", lw=0.8, ls="--")); ld.append(f"random direction in span ({np.mean(base):.3f})")
+    ax.legend(hd, ld, loc="upper left", frameon=True, handlelength=1.0, handletextpad=0.5)
+    ax.set_title("(d) weight alignment\n(points = folds × seeds)")
+    fig.tight_layout(h_pad=1.0, w_pad=1.2)
     caption = ("Figure 5. Subject information in the tangent-space features (EEGBCI, 109 subjects). (a) Fraction of the total sum of squares of the tangent features "
                "attributable to subject, class, subject × class (cell means) and residual, in a common tangent space (reference = Fréchet mean of all trials; descriptive only). "
-               "(b) Accuracy of a multinomial logistic regression predicting the subject (109 classes) from tangent features under trial-random and run-disjoint splits, "
-               "with and without per-subject mean removal; dashed = chance. (c) Per-subject differences Δ(P1 − P2) and Δ(P0 − P2) for TS+LR (C = 1) with the original features, "
+               "(b) Accuracy of a multinomial logistic regression predicting the subject (109 classes) from tangent features under the trial-random (P0) and run-disjoint (P1) splits, "
+               "raw and after removing each subject's feature mean (subject-centred); dashed = chance; the printed 0.000 marks groups that were evaluated and scored zero, not missing bars. (c) Per-subject differences Δ(P1 − P2) and Δ(P0 − P2) for TS+LR (C = 1) with the original features, "
                "after subtracting each subject's feature mean, and after Riemannian recentering (points = subjects; bar = mean; whisker = 95 % CI). "
                "(d) Alignment of the fitted weight vector w with the subject-specific class-separation directions d_s and with the global direction (points = folds × seeds). Values: " + " | ".join(cap))
     F.save(fig, f"fig5_mechanism_{args.tag}", caption, files)

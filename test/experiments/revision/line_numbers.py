@@ -4,7 +4,7 @@ Output: markdown table (heading -> page, line). Margin numbers are digit-only wo
 Section headings are recognised as ENTIRELY BOLD lines whose text starts with the heading title (the section number is
 typeset in a separate block by iopjournal.cls); captions/other phrases are matched by prefix on any line."""
 import re, sys
-import fitz
+import pymupdf as fitz
 pdf = sys.argv[1]; phrases = sys.argv[2:]
 doc = fitz.open(pdf)
 heads = ["1 Introduction", "2 Methods", "2.1 Datasets", "2.2 Preprocessing", "2.3 Decoders", "2.4 Protocol ladder", "2.5 Controlled analyses",

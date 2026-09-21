@@ -2,7 +2,7 @@
   "run_id": "stats_rev1_e12",
   "command": "test/experiments/revision/e12_stats.py --tag rev1 --e12 results/revision/e12_rev1_mi_lr_per_subject.csv,results/revision/e12_rev1_mi_ff_per_subject.csv --e1 results/revision/e1_eegbci_rev1_per_subject.csv --e11 results/revision/e11_rev1_t12_per_subject.csv,results/revision/e11_rev1_t34_per_subject.csv --e9 results/revision/e9_rev1_t12_per_subject.csv,results/revision/e9_rev1_t34_per_subject.csv",
   "cwd": "<repo-root>",
-  "git_head": "b75bce0e030c6edb74b63e11cf12f44eb734a15b",
+  "git_head": "d7b13731dfdf333c67a32658153de2c6215929c0",
   "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
   "versions": {
     "python": "3.12.12",
@@ -17,10 +17,10 @@
     "torch": "2.10.0+cu128"
   },
   "hostname": "user",
-  "started_utc": "2026-09-16T10:45:30Z",
-  "finished_utc": "2026-09-16T10:45:34Z",
+  "started_utc": "2026-09-21T02:21:20Z",
+  "finished_utc": "2026-09-21T02:21:23Z",
   "outputs": {
-    "results/revision/stats_rev1_e12_calibration.csv": "25812fb4dd6564549882b0be2a54ccb4b3a85b341e3fbacea252bbdbf5060cb2"
+    "results/revision/stats_rev1_e12_calibration.csv": "05190673dbb20c448270e9411940be084005abf14263a202d683f8d49a863fb0"
   },
   "args": {
     "tag": "rev1",

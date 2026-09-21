@@ -19,6 +19,15 @@ import common as C  # noqa: E402
 import fig_common as F  # noqa: E402
 
 
+def kfmt(x: int) -> str:
+    """Compact tick label for a parameter count (k = 1000), so 8 pt labels do not collide."""
+    if x < 1000:
+        return str(x)
+    if x < 10000:
+        return f"{x / 1000:.1f}k"
+    return f"{x / 1000:.0f}k"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--e7", required=True)
@@ -37,7 +46,7 @@ def main() -> int:
         params[(r["model"], r["width"])] = int(r["n_params"])
         gap[(r["model"], r["width"], r["protocol"])].append(float(r["train_acc"]) - float(r["test_acc"]))
     models = [m for m in ("eegnet_v4", "shallow_fbcsp") if any(k[1] == m for k in pm)]
-    fig, axes = plt.subplots(2, len(models), figsize=(7.4, 4.6), squeeze=False)
+    fig, axes = plt.subplots(2, len(models), figsize=(F.FIG_W_IN, 5.1), squeeze=False)
     rng = np.random.default_rng(C.SEED)
     cap = []
     for j, m in enumerate(models):
@@ -57,9 +66,9 @@ def main() -> int:
         ax.plot(xs, ds, marker=F.MODEL_MARK[m], ms=4, color="black", zorder=5, label="mean ± 95 % CI")
         ax.fill_between(xs, los, his, color="black", alpha=0.15, linewidth=0, zorder=4)
         ax.axhline(0, color="#888888", lw=0.8, ls="--")
-        ax.set_xscale("log"); ax.set_ylabel("Δ(P0 − P2) (fraction correct)"); ax.set_title(f"({'ab'[j]}) {F.MODEL_LABEL[m]}: trial-random minus subject-disjoint")
-        ax.set_xticks(xs); ax.set_xticklabels([f"{w}\n{x:,}" for w, x in zip(widths, xs)], fontsize=6.5)
-        ax.set_xlabel("width parameter (top) and trainable parameters (bottom)")
+        ax.set_xscale("log"); ax.set_ylabel("Δ(P0 − P2)\n(fraction correct)"); ax.set_title(f"({'ab'[j]}) {F.MODEL_LABEL[m]}:\nΔ(P0 − P2) vs capacity")
+        ax.set_xticks(xs); ax.set_xticklabels([f"{w}\n{kfmt(x)}" for w, x in zip(widths, xs)], fontsize=8)
+        ax.set_xlabel("Width parameter (top) and trainable\nparameters (bottom; k = 1000)")
         ax.legend(loc="upper left", frameon=False)
         ax = axes[1, j]
         for p in ("trial_random", "subject_disjoint"):
@@ -68,20 +77,23 @@ def main() -> int:
                 v = np.array(list(pm[("paradigm_mean", m, p, str(w))].values()))
                 lo, hi = C.bootstrap_ci(v)
                 means.append(v.mean()); lo_.append(lo); hi_.append(hi)
-            ax.plot(xs, means, marker="o", ms=3.5, color=F.PROTO_COLOR[p], label=F.PROTO_LABEL[p] + " test")
+            short = "P0" if p == "trial_random" else "P2"
+            ax.plot(xs, means, marker="o", ms=3.5, color=F.PROTO_COLOR[p], label=short + " test")
             ax.fill_between(xs, lo_, hi_, color=F.PROTO_COLOR[p], alpha=0.18, linewidth=0)
             g = [np.mean(gap[(m, str(w), p)]) for w in widths]
-            ax.plot(xs, np.array(means) + np.array(g), ls=":", lw=1.1, color=F.PROTO_COLOR[p], label=F.PROTO_LABEL[p] + " training (dotted)")
+            ax.plot(xs, np.array(means) + np.array(g), ls=":", lw=1.1, color=F.PROTO_COLOR[p], label=short + " training")
             cap.append(f"{F.MODEL_LABEL[m]} {p}: " + ", ".join(f"w{w}: test {mm:.3f}, train–test gap {gg:+.3f}" for w, mm, gg in zip(widths, means, g)))
         ax.axhline(0.5, color="#888888", lw=0.8, ls="--"); ax.set_xscale("log")
-        ax.set_xticks(xs); ax.set_xticklabels([f"{x:,}" for x in xs], fontsize=6.5)
-        ax.set_xlabel("trainable parameters (count)"); ax.set_ylabel("Accuracy (fraction correct)"); ax.set_title(f"({'cd'[j]}) {F.MODEL_LABEL[m]}: test and training accuracy")
-        ax.legend(loc="lower right", frameon=False)
-    fig.tight_layout(h_pad=1.0, w_pad=0.8)
-    caption = ("Figure 3. Network-width sweeps on EEGBCI (paradigm mean, 109 subjects, one seed). Top: per-subject difference between the trial-random (P0) and "
-               "subject-disjoint (P2) protocols versus the trainable-parameter count (points = subjects, line = mean, band = subject-bootstrap 95 % CI; dashed = 0). "
-               "Bottom: test accuracy (solid, mean with 95 % CI band) and training accuracy (dotted; test mean plus the mean train–test gap over folds) under both protocols. "
-               "EEGNet width = F1 (D = 2, F2 = 2 F1); ShallowFBCSPNet width = number of temporal = spatial filters. Values: " + " | ".join(cap))
+        ax.set_xticks(xs); ax.set_xticklabels([kfmt(x) for x in xs], fontsize=8)
+        ax.set_xlabel("Trainable parameters (k = 1000)"); ax.set_ylabel("Accuracy\n(fraction correct)"); ax.set_title(f"({'cd'[j]}) {F.MODEL_LABEL[m]}:\ntest and training accuracy")
+        ax.legend(loc="lower right", frameon=False, ncol=2, columnspacing=0.8, handlelength=1.4)
+    fig.tight_layout(rect=(0, 0.008, 1, 1), h_pad=0.9, w_pad=1.0)
+    caption = ("Figure 3. Network-width sweeps on EEGBCI (paradigm mean over the four paradigms, 109 subjects, one seed). "
+               "(a),(b) Per-subject difference between the trial-random (P0) and subject-disjoint (P2) protocols versus the trainable-parameter count "
+               "(points = subjects, line = mean, band = subject-bootstrap 95 % CI over the 109 subjects; dashed = 0). "
+               "(c),(d) Test accuracy (solid, mean with 95 % CI band) and training accuracy (dotted; test mean plus the mean train–test gap over folds) under both protocols. "
+               "EEGNet width = F1 (D = 2, F2 = 2 F1); ShallowFBCSPNet width = number of temporal = spatial filters; "
+               "P0 = trial-random 3-fold (subject- and run-overlapping), P2 = subject-disjoint 3-fold. Values: " + " | ".join(cap))
     F.save(fig, f"fig3_width_{args.tag}", caption, files)
     return 0
 
