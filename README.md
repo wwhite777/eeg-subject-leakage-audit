@@ -45,15 +45,17 @@ Holm-corrected over the 12 contrasts of the displayed table (`stats_rev1_contras
 BCI-IV-2a (n = 9, leave-one-subject-out; `stats_rev1_contrasts.csv`): run-disjoint − LOSO = +0.098 (TS+LR),
 +0.051 (CSP+LDA), +0.060 (ShallowFBCSPNet), +0.094 (EEGNet); session-disjoint − LOSO = +0.036 / +0.025 /
 +0.021 / +0.059 (exact conditional signed-rank test; the smallest attainable raw p is 0.0039 at n = 9, and with 24
-contrasts in the displayed table no Holm-adjusted value can fall below 0.094, so the statements for this dataset rest
+contrasts in the displayed table no Holm-adjusted value can fall below 0.0938 (24 × 2/2⁹), so the statements for this dataset rest
 on the confidence intervals and sign counts).
 
 Other results (all in `results/revision/stats_rev1_*.csv`): regularization sweep (`e2`), subject-identity
 decoding and variance decomposition (`e3a`, `e3b`), subject-mean removal and Riemannian recentering (`e3c`),
 weight alignment (`e3d`), PCA-dimension sweep (`e4`), six classifiers on identical features (`e5`), reference-mean
 tests with TOST (`e6`, `e14`), width sweeps (`e9_*width*`), training-subject count × dimension factorial (`e8`),
-within-subject networks (`e11`), calibration-size curve (`e12`: thirty labelled trials raise TS+LR by +0.070, leave CSP+LDA unchanged, and do not improve EEGNet under fixed fine-tuning), matched preprocessing (`e1_*ztrial*`,
+within-subject networks (`e11`), calibration-size curve (`e12`: up to thirty labelled trials raise TS+LR by +0.070, show no detected difference for CSP+LDA, and do not improve EEGNet under fixed fine-tuning), matched preprocessing (`e1_*ztrial*`,
 `e9_*global*`), exploratory stratification analysis (`e15`).
+
+`results/revision/SOURCES.md` maps every table and claim to its source file; superseded exports from earlier passes are kept under `results/revision/superseded/` and are not cited.
 
 ## Reproduce
 
@@ -83,7 +85,8 @@ results were seen.
 
 ```
 test/experiments/revision/   # common.py, deep_common.py, e1..e15 experiment scripts, e_stats.py, make_tables.py, fig*.py, run_all.sh
-results/revision/            # per-subject / per-fold / per-draw result tables (tag rev1) + manifests + stats tables
+results/revision/            # per-subject / per-fold / per-draw result tables (tag rev1) + manifests + stats tables + SOURCES.md
+results/revision/superseded/ # exports from earlier passes, kept for provenance, not cited
 result/figure/revision/      # figures (PNG, 300 dpi) with generated captions
 research/REVISION_PLAN_v1.md # frozen analysis plan (sha256 in REVISION_PLAN_v1.sha256)
 test/experiments/eegbci_full, test/experiments/bci2a, results/eegbci_full, results/bci2a   # July 2026 analysis (superseded)
