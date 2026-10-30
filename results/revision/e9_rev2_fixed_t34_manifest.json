@@ -1,0 +1,43 @@
+{
+  "run_id": "e9_rev2_fixed_t34",
+  "command": "test/experiments/revision/e9_deep_ladder.py --tasks imagery_fists_feet,real_fists_feet --fixed-test --seeds 20260916,20260917,20260918 --gpu 0 --tag rev2_fixed_t34",
+  "cwd": "<repo-root>",
+  "git_head": "2f6d563c5105f4a34e07c25abc82a3714cc0d293",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-10-30T04:45:19Z",
+  "finished_utc": "2026-10-30T04:57:13Z",
+  "outputs": {
+    "results/revision/e9_rev2_fixed_t34_per_subject.csv": "cd570347b5ee86405cad408cf8d00e1a4a55a2fdfde8c34a8367747751570d70",
+    "results/revision/e9_rev2_fixed_t34_per_fold.csv": "a744e53abe27d808994f7faecb81f10c1d20b2c3b3efa18785a4aba8ce62809f"
+  },
+  "args": {
+    "tasks": "imagery_fists_feet,real_fists_feet",
+    "models": "eegnet_v4,shallow_fbcsp",
+    "protocols": "trial_random,run_disjoint,subject_disjoint",
+    "fixed_test": true,
+    "seeds": "20260916,20260917,20260918",
+    "widths": "",
+    "preproc": "ztrial",
+    "epochs": 40,
+    "gpu": 0,
+    "device": "auto",
+    "max_subjects": 0,
+    "tag": "rev2_fixed_t34"
+  },
+  "device": "cuda:0",
+  "smoke": false,
+  "plan_v2_sha256": "888c7635ff5d71b55023fc8ccacc19f7ca79cd7097cffe370fdb045d916bf096"
+}

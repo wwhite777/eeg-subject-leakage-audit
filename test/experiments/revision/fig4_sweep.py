@@ -2,7 +2,7 @@
 """Figure 4 — regularization sweep v2 (E2): both accuracy curves, training accuracy, the L2 norm of w, and
 the protocol differences with per-subject points. Paradigm mean over the four EEGBCI paradigms.
 
-Codex r003 finding F-r003-5: the log axes were labelled by the default formatter as 10^{-4} mathtext, whose
+Review correction r003 F-r003-5: the log axes were labelled by the default formatter as 10^{-4} mathtext, whose
 exponent printed at 5.6 pt. The decades are now labelled with plain strings at the full tick size, and
 fig_common.save() re-measures every glyph in the PDF companion before the figure is written.
 Usage: fig4_sweep.py --e2 <per_subject.csv> --tag rev1  (the per-fold CSV is found by name)

@@ -1,0 +1,43 @@
+{
+  "run_id": "stats_rev2",
+  "command": "<repo-root>/test/experiments/revision/e_stats.py --tag rev2 --e8 <repo-root>/results/revision/e8_rev2_per_draw.csv",
+  "cwd": "<repo-root>",
+  "git_head": "2f6d563c5105f4a34e07c25abc82a3714cc0d293",
+  "plan_sha256": "8d9b1f5b55151c07508fcf9d0dd4aead1723c0c30e449b79153dcc9abdf05b73",
+  "versions": {
+    "python": "3.12.12",
+    "platform": "Linux-5.15.0-171-generic-x86_64-with-glibc2.35",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "mne": "1.13.2",
+    "pyriemann": "0.12",
+    "moabb": "1.7.2",
+    "braindecode": "1.8.1",
+    "torch": "2.10.0+cu128"
+  },
+  "hostname": "user",
+  "started_utc": "2026-10-30T05:13:41Z",
+  "finished_utc": "2026-10-30T05:13:47Z",
+  "outputs": {
+    "results/revision/stats_rev2_factorial.csv": "a5f43a995487630e99e5b352043d8fab2de8a036218626e2ae884aaea8137578"
+  },
+  "args": {
+    "tag": "rev2",
+    "e1_eegbci": null,
+    "e1_bci2a": null,
+    "e9": null,
+    "e10": null,
+    "e11": null,
+    "e2": null,
+    "e4": null,
+    "e5": null,
+    "e3c": null,
+    "e6": null,
+    "e14": null,
+    "e7": null,
+    "e8": "<repo-root>/results/revision/e8_rev2_per_draw.csv",
+    "e13_classical": null,
+    "e13_deep": null
+  }
+}

@@ -12,7 +12,7 @@ every figure is drawn at FIG_W_IN = 6.024 in, the measured text width of the com
 placement scale factor is 1.000 and the generated point sizes are the printed point sizes. No text is
 below 8 pt; MIN_PT below is asserted over every text artist before the file is written.
 
-Codex r003 finding F-r003-5: Text.get_fontsize() reports the PARENT size of a mathtext expression, so a
+Review correction r003 F-r003-5: Text.get_fontsize() reports the PARENT size of a mathtext expression, so a
 $\\ell_2$ subscript or a 10^{-4} log-tick exponent passed that check while rendering at 5.6-6.0 pt. The
 vector companion is therefore written FIRST and re-measured with pymupdf (assert_pdf_min_glyph); a figure
 whose PDF carries any text span below MIN_PT is deleted, not published. plain_log_ticks() replaces the

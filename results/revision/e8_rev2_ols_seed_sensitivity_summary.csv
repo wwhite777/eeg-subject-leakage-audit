@@ -1,0 +1,17 @@
+task,coefficient,n_seeds,upper_min,upper_max,lower_min,lower_max,n_excluding_zero
+imagery_fists_feet,intercept_at_grid_centre,50,0.0354029,0.036196,0.0238198,0.0246197,50
+imagery_fists_feet,log2N,50,-0.00143448,-7.7442e-05,-0.0168198,-0.0159465,50
+imagery_fists_feet,log2d,50,0.0165236,0.0166678,0.0145906,0.0147084,50
+imagery_fists_feet,log2N_x_log2d,50,-0.000985352,-0.000832527,-0.0031178,-0.00297395,50
+imagery_left_right_fist,intercept_at_grid_centre,50,0.0242018,0.0246579,0.01774,0.0181361,50
+imagery_left_right_fist,log2N,50,-0.000201808,0.000354073,-0.00708616,-0.00668505,16
+imagery_left_right_fist,log2d,50,0.0146508,0.0147612,0.0131245,0.0132109,50
+imagery_left_right_fist,log2N_x_log2d,50,0.000384828,0.000499817,-0.00115543,-0.00105536,0
+real_fists_feet,intercept_at_grid_centre,50,0.0855617,0.0861559,0.0751953,0.076012,50
+real_fists_feet,log2N,50,-0.020967,-0.0201429,-0.03551,-0.0346763,50
+real_fists_feet,log2d,50,0.0243215,0.0245038,0.0220588,0.0221925,50
+real_fists_feet,log2N_x_log2d,50,-0.000929422,-0.000754347,-0.00321822,-0.00307336,50
+real_left_right_fist,intercept_at_grid_centre,50,0.0491521,0.049758,0.04126,0.0417275,50
+real_left_right_fist,log2N,50,-0.00408595,-0.00359976,-0.0144265,-0.0136684,50
+real_left_right_fist,log2d,50,0.0213436,0.0214421,0.0195094,0.0196295,50
+real_left_right_fist,log2N_x_log2d,50,-0.000977704,-0.000825048,-0.00289999,-0.00280732,50

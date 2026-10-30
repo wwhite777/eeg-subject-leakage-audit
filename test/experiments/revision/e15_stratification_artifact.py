@@ -30,15 +30,19 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=",".join(C.TASKS))
     ap.add_argument("--n-seeds", type=int, default=5)
+    ap.add_argument("--protocols", default="trial_random,run_disjoint,subject_disjoint")
     ap.add_argument("--tag", default=None)
     args = ap.parse_args()
+    protocols = [p for p in args.protocols.split(",") if p]
+    if not protocols or len(set(protocols)) != len(protocols) or set(protocols) - {"trial_random", "trial_random_sc", "run_disjoint", "subject_disjoint"}:
+        ap.error("invalid --protocols")
     started = C.utc_now()
     tag = args.tag or C.stamp()
     rows, summ, cell_rows = [], [], []
     for task in [t for t in args.tasks.split(",") if t]:
         data = C.load_eegbci_task(task)
         y, subject = data["y"], data["subject"]
-        for protocol in ("trial_random", "run_disjoint", "subject_disjoint"):
+        for protocol in protocols:
             seeds = [C.SEED + r for r in range(args.n_seeds)] if protocol != "run_disjoint" else [C.SEED]
             for seed in seeds:
                 splits = C.ladder_splits(data, protocol, seed, 3)

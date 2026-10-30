@@ -191,6 +191,8 @@ def split_loso(subject: np.ndarray):
 
 def ladder_splits(data: dict, protocol: str, seed: int, n_splits: int | None = None):
     """Protocol ladder of plan B3 for one dataset dict."""
+    if protocol == "trial_random_sc":
+        return split_subject_class_stratified(data["y"], data["subject"], n_splits or 3, seed)
     if protocol == "trial_random":
         return split_trial_random(data["y"], n_splits or 3, seed)
     if protocol == "run_disjoint":
@@ -472,3 +474,278 @@ def fmt(v, nd: int = 6) -> str:
         return f"{float(v):.{nd}g}"
     except Exception:  # noqa: BLE001
         return str(v)
+
+
+# ----------------------------------------------------------------------------
+# revision 2 matched controls (frozen plan v2 B20--B21)
+# ----------------------------------------------------------------------------
+def assert_subject_class_stratified_splits(y, subject, splits, n_splits=None):
+    """Fail closed on cell imbalance, duplicate coverage or incomplete complements."""
+    y, subject = np.asarray(y), np.asarray(subject)
+    assert y.ndim == subject.ndim == 1 and len(y) == len(subject) > 0
+    k = len(splits) if n_splits is None else n_splits
+    assert k >= 2 and len(splits) == k
+    idx = np.arange(len(y))
+    coverage = np.zeros(len(y), dtype=int)
+    for tr, te, _ in splits:
+        tr, te = np.asarray(tr), np.asarray(te)
+        for part in (tr, te):
+            assert part.ndim == 1 and np.issubdtype(part.dtype, np.integer)
+            assert np.all((part >= 0) & (part < len(y)))
+            assert len(np.unique(part)) == len(part), "duplicate trial within fold"
+        assert not np.intersect1d(tr, te).size, "overlapping train/test"
+        assert np.array_equal(np.sort(np.r_[tr, te]), idx), "incomplete train/test complement"
+        coverage[te] += 1
+        for s in np.unique(subject):
+            for c in np.unique(y):
+                n = int(np.sum((subject == s) & (y == c)))
+                n_test = int(np.sum((subject[te] == s) & (y[te] == c)))
+                assert n_test in {n // k, (n + k - 1) // k}, "unbalanced subject/class cell"
+    assert np.all(coverage == 1), "every trial must occur in exactly one test fold"
+
+
+def split_subject_class_stratified(y, subject, n_splits, seed):
+    """P0s: shuffle each subject/class cell and deal with a cycling cell offset."""
+    y, subject = np.asarray(y), np.asarray(subject)
+    assert y.ndim == subject.ndim == 1 and len(y) == len(subject) > 0
+    assert isinstance(n_splits, (int, np.integer)) and n_splits >= 2
+    rng = np.random.default_rng(seed)
+    fold = np.full(len(y), -1, dtype=int)
+    cell = 0
+    for s in np.unique(subject):
+        for c in np.unique(y):
+            idx = np.flatnonzero((subject == s) & (y == c))
+            shuffled = rng.permutation(idx)
+            fold[shuffled] = (np.arange(len(idx)) + cell % n_splits) % n_splits
+            cell += 1
+    splits = [(np.flatnonzero(fold != k), np.flatnonzero(fold == k), f"trial_sc{k}")
+              for k in range(n_splits)]
+    assert_subject_class_stratified_splits(y, subject, splits, n_splits)
+    return splits
+
+
+def p0s_construction_table(data, splits, protocol="trial_random_sc", seed=None):
+    """Actual cell/run counts and discrepancies from the corresponding P1 holdout.
+
+    The two-fold IV-2a protocol is paired with P1s (actual sessions); the
+    six-fold protocol is paired with P1 (actual runs across both sessions).
+    Rows with run='all' give complete subject/class counts. Other rows give
+    each physical recording's contribution, including zero contributions.
+    """
+    y, subject = data["y"], data["subject"]
+    assert_subject_class_stratified_splits(y, subject, splits)
+    session_comparator = data.get("dataset") == "bci2a" and len(splits) == 2
+    p1 = split_session_disjoint(data["session"]) if session_comparator else split_run_disjoint(data["run_idx"])
+    assert len(p1) == len(splits), "P0s and its actual P1 comparator need the same number of folds"
+    actual_run = data.get("run_number", data.get("run", data["run_idx"]))
+    rows = []
+    for (tr, te, fold), (p1_tr, p1_te, p1_fold) in zip(splits, p1):
+        for s in np.unique(subject):
+            for c in np.unique(y):
+                cell = (subject == s) & (y == c)
+                for run in ["all", *np.unique(actual_run[subject == s]).tolist()]:
+                    mask = cell if run == "all" else cell & (actual_run == run)
+                    n_tr, n_te = int(mask[tr].sum()), int(mask[te].sum())
+                    n_p1_tr, n_p1_te = int(mask[p1_tr].sum()), int(mask[p1_te].sum())
+                    rows.append({"dataset": data.get("dataset", "eegbci"), "task": data.get("task", ""),
+                                 "protocol": protocol, "seed": seed, "fold": fold,
+                                 "p1_protocol": "session_disjoint" if session_comparator else "run_disjoint",
+                                 "p1_fold": p1_fold, "subject": int(s), "run": run, "class": int(c),
+                                 "n_total": int(mask.sum()), "n_train": n_tr, "n_test": n_te,
+                                 "p1_n_train": n_p1_tr, "p1_n_test": n_p1_te,
+                                 "delta_train": n_tr - n_p1_tr, "delta_test": n_te - n_p1_te})
+    return rows
+
+
+def fixed_test_arms(data, dataset, seed, rotation):
+    """Construct E17's matched arms, fixed test and common BG reference/validation.
+
+    Rotation is zero-based. Cache rows preserve recording order; sorting global
+    indices is therefore the recording-time ordering within a cell. Full EEGBCI
+    uses three groups of 36 and one leftover. Capped smoke data use floor(N/3)
+    subjects per group and explicitly report *every* leftover.
+
+    A2 deliberately substitutes the final run/session into the preceding
+    run/session's training *slot*. Physical run counts cannot be equal after
+    that substitution: ``counts`` releases both actual runs and matched slots.
+    Equality assertions apply to the slots, with explicitly recorded excess
+    when h2 is larger than the retained source cell (the plan's shortfall).
+    """
+    from sklearn.model_selection import StratifiedShuffleSplit
+
+    assert dataset in {"eegbci", "bci2a"} and rotation in (0, 1, 2)
+    y, subject = np.asarray(data["y"]), np.asarray(data["subject"])
+    assert y.ndim == subject.ndim == 1 and len(y) == len(subject) > 0
+    subjects = np.unique(subject)
+    group_size = len(subjects) // 3
+    assert group_size > 0, "E17 requires three nonempty subject blocks"
+    perm = np.random.default_rng(seed).permutation(subjects)
+    groups = [perm[k * group_size:(k + 1) * group_size] for k in range(3)]
+    leftover = perm[3 * group_size:]
+    target, donor, background = [groups[(rotation + k) % 3] for k in range(3)]
+    if dataset == "eegbci":
+        source = np.asarray(data["run_idx"])
+        assert np.array_equal(np.unique(source), [0, 1, 2]), "EEGBCI requires three ordered runs"
+        train_units, last_unit = [0, 1], 2
+    else:
+        source = np.asarray(data["session"])
+        sessions = np.unique(source)
+        assert len(sessions) == 2, "IV-2a requires two ordered sessions"
+        train_units, last_unit = [sessions[0]], sessions[1]
+    classes = np.unique(y)
+    assert len(classes) == 2, "E17 is a two-class design"
+
+    def cell(s, run, c):
+        return np.flatnonzero((subject == s) & (source == run) & (y == c))
+
+    def ranked(block):
+        return sorted(block.tolist(), key=lambda s: (int(np.sum(subject == s)), int(s)))
+
+    bg = np.flatnonzero(np.isin(subject, background) & np.isin(source, train_units))
+    test, h2, kept_t, kept_d, replacement = [], [], [], [], []
+    pairing = []
+    shortfall_by_class = {int(c): 0 for c in classes}
+    for pair, (s_t, s_d) in enumerate(zip(ranked(target), ranked(donor))):
+        for c in classes:
+            last = cell(s_t, last_unit, c)
+            test.extend(last[::2])
+            adjacent = last[1::2]
+            h2.extend(adjacent)
+            for run in train_units:
+                ct, cd = cell(s_t, run, c), cell(s_d, run, c)
+                n = min(len(ct), len(cd))
+                kt, kd = ct[:n], cd[:n]
+                kept_t.extend(kt)
+                kept_d.extend(kd)
+                replacing = run == train_units[-1]
+                deficit = max(0, len(adjacent) - n) if replacing else 0
+                if replacing:
+                    replacement.extend(kt[:max(0, n - len(adjacent))])
+                    replacement.extend(adjacent)
+                    shortfall_by_class[int(c)] += deficit
+                else:
+                    replacement.extend(kt)
+                pairing.append({"dataset": dataset, "task": data.get("task", ""), "seed": int(seed),
+                                "rotation": int(rotation), "pair": pair, "subject_T": int(s_t), "subject_D": int(s_d),
+                                "run": int(run), "class": int(c), "n_T": len(ct), "n_D": len(cd),
+                                "n_kept": n, "shortfall": deficit})
+    arms = {"A0": np.sort(np.r_[bg, np.asarray(kept_d, dtype=int)]),
+            "A1": np.sort(np.r_[bg, np.asarray(kept_t, dtype=int)]),
+            "A2": np.sort(np.r_[bg, np.asarray(replacement, dtype=int)])}
+    test, h2 = np.sort(np.asarray(test, dtype=int)), np.sort(np.asarray(h2, dtype=int))
+    assert len(test) > 0 and len(bg) > 0
+    val_split = StratifiedShuffleSplit(n_splits=1, test_size=0.15, random_state=seed)
+    _, val_local = next(val_split.split(np.zeros(len(bg)), y[bg]))
+    validation = np.sort(bg[val_local])
+    counts = []
+    actual_run = np.asarray(data.get("run_number", data.get("run", data["run_idx"])))
+    for arm, idx in arms.items():
+        slots = source[idx].copy()
+        if arm == "A2":
+            slots[np.isin(idx, h2)] = train_units[-1]
+        for c in classes:
+            for run in np.unique(actual_run):
+                mask = (y[idx] == c) & (actual_run[idx] == run)
+                counts.append({"dataset": dataset, "task": data.get("task", ""), "seed": int(seed), "rotation": int(rotation),
+                               "arm": arm, "count_type": "actual_run", "run": int(run), "class": int(c),
+                               "n_trials": int(mask.sum()), "n_subjects": len(np.unique(subject[idx][mask])),
+                               "shortfall": 0})
+            for run in train_units:
+                mask = (y[idx] == c) & (slots == run)
+                deficit = shortfall_by_class[int(c)] if arm == "A2" and run == train_units[-1] else 0
+                counts.append({"dataset": dataset, "task": data.get("task", ""), "seed": int(seed), "rotation": int(rotation),
+                               "arm": arm, "count_type": "matched_slot", "run": int(run), "class": int(c),
+                               "n_trials": int(mask.sum()), "n_subjects": len(np.unique(subject[idx][mask])),
+                               "shortfall": deficit})
+    out = {"test": test, "arms": arms, "bg": bg, "reference_indices": bg,
+           "validation": validation, "reference_indices_by_arm": {a: bg for a in arms},
+           "validation_indices_by_arm": {a: validation for a in arms},
+           "leftover_subject": int(leftover[0]) if len(leftover) == 1 else (leftover.tolist() if len(leftover) else None),
+           "leftover_subjects": leftover.tolist(), "pairing": pairing, "counts": counts,
+           "groups": {"T": target, "D": donor, "B": background, **{f"G{k + 1}": g for k, g in enumerate(groups)}},
+           "h2": h2, "dataset": dataset, "seed": int(seed), "rotation": int(rotation),
+           "group_size": group_size, "shortfall_by_class": shortfall_by_class}
+    assert_fixed_test_arms(data, out)
+    return out
+
+
+def assert_fixed_test_arms(data, design):
+    """Check released E17 construction, including shared preprocessing sources."""
+    from sklearn.model_selection import StratifiedShuffleSplit
+
+    y, subject = np.asarray(data["y"]), np.asarray(data["subject"])
+    arms, bg, test, h2 = design["arms"], design["bg"], design["test"], design["h2"]
+    target, donor, background = [design["groups"][k] for k in ("T", "D", "B")]
+    groups = [target, donor, background]
+    perm = np.random.default_rng(design["seed"]).permutation(np.unique(subject))
+    expected_groups = [perm[k * design["group_size"]:(k + 1) * design["group_size"]] for k in range(3)]
+    for offset, group in enumerate(groups):
+        assert np.array_equal(group, expected_groups[(design["rotation"] + offset) % 3]), "seeded subject blocks differ"
+    assert np.array_equal(design["leftover_subjects"], perm[3 * design["group_size"]:]), "incorrect leftover reporting"
+    assert all(len(g) == design["group_size"] for g in groups)
+    assert len(np.unique(np.concatenate(groups))) == 3 * design["group_size"]
+    assert not np.intersect1d(np.concatenate(groups), design["leftover_subjects"]).size
+    assert np.array_equal(np.sort(np.r_[np.concatenate(groups), design["leftover_subjects"]]), np.unique(subject))
+    source = data["run_idx"] if design["dataset"] == "eegbci" else data["session"]
+    units = np.unique(source)
+    train_units, last_unit = units[:-1], units[-1]
+    expected_bg = np.flatnonzero(np.isin(subject, background) & np.isin(source, train_units))
+    assert np.array_equal(bg, expected_bg), "background must contain all prior-run/session trials"
+    expected_test, expected_h2 = [], []
+    for s in target:
+        for c in np.unique(y):
+            idx = np.flatnonzero((subject == s) & (source == last_unit) & (y == c))
+            expected_test.extend(idx[::2])
+            expected_h2.extend(idx[1::2])
+    assert np.array_equal(test, np.sort(expected_test)), "h1 must use alternating even positions"
+    assert np.array_equal(h2, np.sort(expected_h2)), "h2 must use alternating odd positions"
+    assert not np.intersect1d(test, h2).size
+    assert np.array_equal(design["reference_indices"], bg), "reference must use exactly BG"
+    assert np.isin(design["validation"], bg).all(), "validation must use only BG"
+    _, expected_val = next(StratifiedShuffleSplit(n_splits=1, test_size=0.15, random_state=design["seed"]).split(np.zeros(len(bg)), y[bg]))
+    assert np.array_equal(design["validation"], np.sort(bg[expected_val])), "validation must be the seeded 15% BG slice"
+    for arm, idx in arms.items():
+        assert np.issubdtype(idx.dtype, np.integer) and np.all((idx >= 0) & (idx < len(y)))
+        assert len(idx) == len(np.unique(idx)), "duplicate arm trial"
+        assert not np.intersect1d(test, idx).size, "test trial in training arm"
+        assert not np.isin(subject[idx], design["leftover_subjects"]).any(), "leftover subject in arm"
+        expected_subjects = np.r_[background, donor if arm == "A0" else target]
+        assert np.array_equal(np.unique(subject[idx]), np.sort(expected_subjects)), "incorrect training subjects"
+        assert len(np.unique(subject[idx])) == 2 * design["group_size"]
+        assert np.isin(bg, idx).all(), "each arm must retain the unchanged BG"
+        assert np.array_equal(design["reference_indices_by_arm"][arm], bg), "moving reference source"
+        assert np.array_equal(design["validation_indices_by_arm"][arm], design["validation"]), "moving validation slice"
+    ranked = lambda block: sorted(block.tolist(), key=lambda s: (int(np.sum(subject == s)), int(s)))
+    pair_ids = sorted({(r["pair"], r["subject_T"], r["subject_D"]) for r in design["pairing"]})
+    assert pair_ids == [(p, int(t), int(d)) for p, (t, d) in enumerate(zip(ranked(target), ranked(donor)))], "rank pairing mismatch"
+    expected_arms = {a: list(bg) for a in arms}
+    for row in design["pairing"]:
+        c, run, st, sd = [row[k] for k in ("class", "run", "subject_T", "subject_D")]
+        ct = np.flatnonzero((subject == st) & (source == run) & (y == c))
+        cd = np.flatnonzero((subject == sd) & (source == run) & (y == c))
+        n = min(len(ct), len(cd))
+        assert (row["n_T"], row["n_D"], row["n_kept"]) == (len(ct), len(cd), n)
+        adjacent = h2[(subject[h2] == st) & (y[h2] == c)]
+        replacing = run == train_units[-1]
+        deficit = max(0, len(adjacent) - n) if replacing else 0
+        assert row["shortfall"] == deficit, "unreported h2 shortfall"
+        expected_arms["A0"].extend(cd[:n])
+        expected_arms["A1"].extend(ct[:n])
+        expected_arms["A2"].extend(ct[:max(0, n - len(adjacent))] if replacing else ct[:n])
+        if replacing:
+            expected_arms["A2"].extend(adjacent)
+    for arm in arms:
+        assert np.array_equal(arms[arm], np.sort(expected_arms[arm])), "arm does not implement matched cell substitution"
+    for c in np.unique(y):
+        a0, a1, a2 = [arms[a] for a in ("A0", "A1", "A2")]
+        assert np.sum(y[a0] == c) == np.sum(y[a1] == c), "A0/A1 class count mismatch"
+        assert np.sum(y[a2] == c) - np.sum(y[a1] == c) == design["shortfall_by_class"][int(c)]
+        for run in train_units:
+            n0 = int(np.sum((y[a0] == c) & (source[a0] == run)))
+            n1 = int(np.sum((y[a1] == c) & (source[a1] == run)))
+            assert n0 == n1, "A0/A1 run/class count mismatch"
+            n2 = int(np.sum((y[a2] == c) & (source[a2] == run)))
+            if run == train_units[-1]:
+                n2 += int(np.sum(y[h2] == c))
+            expected_excess = design["shortfall_by_class"][int(c)] if run == train_units[-1] else 0
+            assert n2 - n1 == expected_excess, "A1/A2 matched slot/class count mismatch"

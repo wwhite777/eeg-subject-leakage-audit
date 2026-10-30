@@ -1,0 +1,26 @@
+{
+  "allow_incomplete": false,
+  "analysis": "E16/E17 subject-paired contrasts",
+  "inputs": {
+    "<repo-root>/results/revision/e10_rev1_per_subject.csv": "d47ac94cdd16b295cd2c7664cec89b4246506d934ff56eed209723c2b0599a35",
+    "<repo-root>/results/revision/e10_rev2_fixed_per_subject.csv": "7ddcf4ea4b27934630559e60648059894ab8f11d397184daf8a04353f6ce8e4a",
+    "<repo-root>/results/revision/e10_rev2_per_subject.csv": "e340bab4b01fc793775ad119c976ee7c76af3c2530c542696c111736a2351c97",
+    "<repo-root>/results/revision/e17_bci2a_rev2_per_subject.csv": "0a0bd1dc2983e6237ce36fa0c09d69fb5b3b01ea651ca520660a0f03bf053770",
+    "<repo-root>/results/revision/e17_eegbci_rev2_per_subject.csv": "770c3a89e6afccc9dcfdae267e5833d0e89d59bfa93e9941a892f0475e02c320",
+    "<repo-root>/results/revision/e1_bci2a_rev1_per_subject.csv": "a2768c8b3dbbb6b964543e719fc34aa49b5eb462d91c3fe9604d4ce72d9185e1",
+    "<repo-root>/results/revision/e1_bci2a_rev2_per_subject.csv": "a224fec18dc28d5519a2226c7f5acfd9a221b301dcccfeb5ad1a304fcf441a0d",
+    "<repo-root>/results/revision/e1_eegbci_rev1_per_subject.csv": "82854a6af01e90434ae4b120fe99aa71614b91a9665d937bc7955074d1149c6b",
+    "<repo-root>/results/revision/e1_eegbci_rev2_per_subject.csv": "c07ceef39ee22c8ff31c5b0f0b4342355d4f3461b1b223bf93cc280c47716800",
+    "<repo-root>/results/revision/e9_rev1_all_per_subject.csv": "8e13bb7eeeb5ffb148f2a57b0ceb3f86fda1a2679eccb6f798b03c694afe70c1",
+    "<repo-root>/results/revision/e9_rev2_fixed_t12_per_subject.csv": "efa9474ec0166bc1e5024c878e9d41329cac13a9ef2591c35ae3660eb30f1ad7",
+    "<repo-root>/results/revision/e9_rev2_fixed_t34_per_subject.csv": "cd570347b5ee86405cad408cf8d00e1a4a55a2fdfde8c34a8367747751570d70",
+    "<repo-root>/results/revision/e9_rev2_t12_per_subject.csv": "5f58926a22ba7afecdb29473a540ef515c366bc7f6b727626be82db42e948af1",
+    "<repo-root>/results/revision/e9_rev2_t34_per_subject.csv": "680f1a773e81eb08240376cf09fd503f07af5f4bf3c37dfaf392e4804d241209"
+  },
+  "outputs": {
+    "<repo-root>/results/revision/stats_rev2_matched.csv": "00469ce8151677565b5c83e007cd921b0d30e58dcd9c92cc11c50617dad4c284",
+    "<repo-root>/results/revision/stats_rev2_matched_means.csv": "0f7ff7441bc14b6016f58d270751230f95cb905bdfc1ff2d277d1338f22624d8"
+  },
+  "plan": "REVISION_PLAN_v2 B20--B22",
+  "tag": "rev2"
+}

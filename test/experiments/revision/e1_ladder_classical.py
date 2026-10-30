@@ -65,6 +65,9 @@ def fit_predict(model_name: str, data: dict, covs, tr: np.ndarray, te: np.ndarra
 
 
 def protocol_splits(data: dict, protocol: str, seed: int):
+    if protocol in ("trial_random_sc", "trial_random_6_sc", "trial_random_2_sc"):
+        k = {"trial_random_sc": 3, "trial_random_6_sc": 6, "trial_random_2_sc": 2}[protocol]
+        return C.split_subject_class_stratified(data["y"], data["subject"], k, seed)
     if data["dataset"] == "eegbci":
         if protocol == "trial_random":
             return C.split_trial_random(data["y"], 3, seed)
@@ -120,6 +123,7 @@ def main() -> int:
     ap.add_argument("--dataset", choices=["eegbci", "bci2a"], default="eegbci")
     ap.add_argument("--tasks", default=",".join(C.TASKS))
     ap.add_argument("--models", default="csp_lda,riemann_ts_lr")
+    ap.add_argument("--protocols", default=None, help="comma-separated protocols; omitted keeps the original full set")
     ap.add_argument("--preproc", choices=["none", "ztrial"], default="none")
     ap.add_argument("--n-seeds", type=int, default=N_SEEDS)
     ap.add_argument("--n-jobs", type=int, default=32)
@@ -136,6 +140,14 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     models = [m for m in args.models.split(",") if m]
     seeds = [C.SEED + r for r in range(args.n_seeds)]
+    available = dict(seeded_protocols(args.dataset))
+    available.update({p: True for p in (("trial_random_sc",) if args.dataset == "eegbci" else ("trial_random_6_sc", "trial_random_2_sc"))})
+    within_protocol = "within_subject" if args.dataset == "eegbci" else "within_session"
+    selected = list(seeded_protocols(args.dataset)) + [within_protocol] if args.protocols is None else [p for p in args.protocols.split(",") if p]
+    if not selected or len(set(selected)) != len(selected) or set(selected) - (set(available) | {within_protocol}):
+        ap.error(f"invalid protocols: {selected}; choose from {list(available) + [within_protocol]}")
+    if args.n_seeds < 1:
+        ap.error("--n-seeds must be positive")
 
     if args.dataset == "eegbci":
         tasks = [t for t in args.tasks.split(",") if t]
@@ -152,7 +164,7 @@ def main() -> int:
             d = {k: (v[keep] if isinstance(v, np.ndarray) and len(v) == len(keep) else v) for k, v in d.items()}
         datasets = [d]
 
-    per_subject_rows, per_fold_rows = [], []
+    per_subject_rows, per_fold_rows, construction_rows = [], [], []
     for data in datasets:
         task = data["task"]
         if args.preproc == "ztrial":
@@ -165,13 +177,18 @@ def main() -> int:
         print(f"[{task}] trials={len(y)} subjects={len(np.unique(subject))} chans={data['x'].shape[1]} times={data['x'].shape[2]}", flush=True)
 
         jobs = []
-        for protocol, seeded in seeded_protocols(args.dataset).items():
+        for protocol in selected:
+            if protocol == within_protocol:
+                continue
+            seeded = available[protocol]
             for seed in (seeds if seeded else [C.SEED]):
                 splits = protocol_splits(data, protocol, seed)
+                if protocol.endswith("_sc"):
+                    construction_rows.extend(C.p0s_construction_table(data, splits, protocol=protocol, seed=seed))
                 for tr, te, fold in splits:
                     for m in models:
                         jobs.append((m, tr, te, seed, protocol, fold))
-        if not args.skip_within:
+        if not args.skip_within and within_protocol in selected:
             wp = "within_subject" if args.dataset == "eegbci" else "within_session"
             for tr, te, fold in within_splits(data):
                 for m in models:
@@ -209,8 +226,12 @@ def main() -> int:
     pf_path = C.write_csv(out_dir / f"e1_{args.dataset}_{tag}_per_fold.csv", per_fold_rows)
     C.validate_csv(ps_path, ["dataset", "task", "model", "protocol", "seed", "subject", "accuracy"], 1)
     C.validate_csv(pf_path, ["dataset", "task", "model", "protocol", "seed", "fold", "train_acc", "test_acc"], 1)
-    C.write_manifest(out_dir / f"e1_{args.dataset}_{tag}_manifest.json", f"e1_{args.dataset}_{tag}", started, [ps_path, pf_path],
-                     {"args": vars(args), "smoke": bool(args.max_subjects), "n_jobs": args.n_jobs})
+    outputs = [ps_path, pf_path]
+    if construction_rows:
+        outputs.append(C.write_csv(out_dir / f"e16_{args.dataset}_{tag}_construction.csv", construction_rows))
+    C.write_manifest(out_dir / f"e1_{args.dataset}_{tag}_manifest.json", f"e1_{args.dataset}_{tag}", started, outputs,
+                     {"args": vars(args), "smoke": bool(args.max_subjects), "n_jobs": args.n_jobs,
+                      "plan_v2_sha256": C.sha256_file(C.ROOT / "research" / "REVISION_PLAN_v2.md")})
     print(f"DONE e1 {args.dataset} tag={tag} rows={len(per_subject_rows)}", flush=True)
     return 0
 

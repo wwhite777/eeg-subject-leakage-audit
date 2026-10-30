@@ -307,27 +307,43 @@ def main() -> int:
     # ------------------------------------------------------------------ E8 factorial
     if args.e8:
         rr = C.read_csv(Path(args.e8))
+        feasibility_path = Path(args.e8).with_name(Path(args.e8).name.replace("_per_draw.csv", "_feasibility.csv"))
+        excluded = defaultdict(list)
+        if feasibility_path != Path(args.e8) and feasibility_path.exists():
+            for r in sorted(C.read_csv(feasibility_path), key=lambda r: (r["task"], int(r["N"]), int(r["draw"]), int(r["d"]))):
+                if int(r["feasible"]) == 0:
+                    excluded[r["task"]].append(f"{r['task']}:{r['N']}:{r['draw']}:{r['d']}")
+        excluded["paradigm_mean"] = [condition for task in C.TASKS for condition in excluded[task]]
         out = []
         cells = defaultdict(list)
         for r in rr:
             cells[(r["task"], r["model"], int(r["N"]), int(r["d"]), int(r["draw"]))].append((r["protocol"], float(r["mean_acc"])))
-        infl = defaultdict(list)
+        paired = {}
         for (task, model, N, d, draw), vals in cells.items():
             p = dict(vals)
             if "trial_random" in p and "subject_disjoint" in p:
-                infl[(task, model, N, d)].append(p["trial_random"] - p["subject_disjoint"])
+                paired[(task, model, N, d, draw)] = p["trial_random"] - p["subject_disjoint"]
+        pooled = defaultdict(dict)
+        for (task, model, N, d, draw), value in paired.items():
+            if task in C.TASKS:
+                pooled[(model, N, d, draw)][task] = value
+        for (model, N, d, draw), values in sorted(pooled.items()):
+            if set(values) == set(C.TASKS):
+                paired[("paradigm_mean", model, N, d, draw)] = float(np.mean([values[t] for t in C.TASKS]))
+        infl = defaultdict(list)
+        draw_of = defaultdict(list)  # draw ids aligned with the paired contrast values
+        for (task, model, N, d, draw), value in paired.items():
+            infl[(task, model, N, d)].append(value)
+            draw_of[(task, model, N, d)].append(draw)
         for (task, model, N, d), v in sorted(infl.items()):
             v = np.array(v)
             lo, hi = C.bootstrap_ci(v) if len(v) > 1 else (float("nan"), float("nan"))
-            out.append({"task": task, "model": model, "N": N, "d": d, "n_draws": len(v), "inflation_mean": C.fmt(v.mean()), "ci_low": C.fmt(lo), "ci_high": C.fmt(hi), "sd": C.fmt(v.std(ddof=1)) if len(v) > 1 else ""})
+            out.append({"task": task, "model": model, "N": N, "d": d, "n_draws": len(v), "n_obs": len(v),
+                        "inflation_mean": C.fmt(v.mean()), "ci_low": C.fmt(lo), "ci_high": C.fmt(hi), "sd": C.fmt(v.std(ddof=1)) if len(v) > 1 else "",
+                        "excluded_conditions": ";".join(excluded[task])})
         # OLS on log2 N, log2 d (TS+LR), draw-bootstrap CI on coefficients
         N_LEVELS = sorted({k[2] for k in infl if k[1] == "riemann_ts_lr"}); D_LEVELS = sorted({k[3] for k in infl if k[1] == "riemann_ts_lr"})
-        draw_of = defaultdict(list)  # (task, model, N, d) -> list of draw ids aligned with infl values
-        for (task, model, N, d, draw), vals in cells.items():
-            p = dict(vals)
-            if "trial_random" in p and "subject_disjoint" in p:
-                draw_of[(task, model, N, d)].append(draw)
-        for task in sorted({k[0] for k in infl}):
+        for task in sorted({k[0] for k in infl if k[0] != "paradigm_mean"}):
             X, Y, CL = [], [], []
             for (t, model, N, d), v in infl.items():
                 if t == task and model == "riemann_ts_lr":
@@ -358,11 +374,12 @@ def main() -> int:
                 boots = np.array(boots)
                 for name, j in (("intercept_at_grid_centre", 0), ("log2N", 1), ("log2d", 2), ("log2N_x_log2d", 3)):
                     out.append({"task": task, "model": "riemann_ts_lr", "N": "ols", "d": name, "n_draws": "", "n_obs": len(Y), "inflation_mean": C.fmt(beta[j]),
-                                "ci_low": C.fmt(np.percentile(boots[:, j], 2.5)), "ci_high": C.fmt(np.percentile(boots[:, j], 97.5)), "sd": ""})
+                                "ci_low": C.fmt(np.percentile(boots[:, j], 2.5)), "ci_high": C.fmt(np.percentile(boots[:, j], 97.5)), "sd": "",
+                                "excluded_conditions": ";".join(excluded[task])})
         outputs.append(C.write_csv(R / f"stats_{args.tag}_factorial.csv", out))
         for r in out:
             if r["N"] == "ols":
-                print(f"  E8 OLS {r['task']:24s} {r['d']:14s} β={float(r['inflation_mean']):+.4f} CI[{float(r['ci_low']):+.4f},{float(r['ci_high']):+.4f}]")
+                print(f"  E8 OLS protocol contrast {r['task']:24s} {r['d']:14s} β={float(r['inflation_mean']):+.4f} CI[{float(r['ci_low']):+.4f},{float(r['ci_high']):+.4f}] n_obs={r['n_obs']}")
 
     # ------------------------------------------------------------------ E7 width sweep
     if args.e7:

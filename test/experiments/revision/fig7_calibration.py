@@ -2,11 +2,11 @@
 """Figure 7 — labelled calibration-size curve for unseen subjects (E12) with the within-subject reference
 value; per-subject points.
 
-Codex r002 finding F-r002-5: k is a CAP (nominal k). The availability table is read so that the caption
+Review correction r002 F-r002-5: k is a CAP (nominal k). The availability table is read so that the caption
 states how many subject-paradigm cells fell short of the nominal k, and the within-subject line is labelled
 as an UNMATCHED reference (orientation only, not a paired comparison).
 
-Codex r003 finding F-r003-4: that reference is a LEAVE-ONE-RUN-OUT fit — e1_ladder_classical.within_splits()
+Review correction r003 F-r003-4: that reference is a LEAVE-ONE-RUN-OUT fit — e1_ladder_classical.within_splits()
 and e11_within_deep.py train on two runs of the test subject and score the held-out run, rotating over the
 three runs — not a fit "trained on all three runs". The caption now says so.
 Usage: fig7_calibration.py --e12 <csv,csv> --e1 <e1 eegbci per_subject.csv> --e11 <csv,csv> [--avail <csv>] --tag rev1

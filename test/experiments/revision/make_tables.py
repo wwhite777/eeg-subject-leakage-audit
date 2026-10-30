@@ -58,9 +58,14 @@ TIGHT = r"\setlength{\tabcolsep}{3pt}"
 
 
 def main() -> int:
+    global OUT
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", default="rev1")
+    ap.add_argument("--factorial-tag", default=None, help="tag of the factorial statistics export (default: --tag); revision 2 uses rev2 for Table S7 while the other tables stay rev1")
+    ap.add_argument("--out-dir", type=Path, default=OUT)
+    ap.add_argument("--p0s-tag", default="rev2", help="tag of the additional P0s exploratory rows")
     args = ap.parse_args()
+    OUT = args.out_dir
     R = C.RESULTS
     OUT.mkdir(parents=True, exist_ok=True)
     prov = []
@@ -72,7 +77,7 @@ def main() -> int:
 
     # ------------------------------------------------------------- Table 1 EEGBCI
     lines = [r"\begin{table}", r"\caption{EEGBCI (109 subjects; four paradigms averaged per subject): mean accuracy over subjects with the 2000-resample subject-bootstrap 95\,\% CI, "
-             r"and paired per-subject differences. P0 = trial-random 3-fold, P1 = run-disjoint subject-overlapping 3-fold, P2 = subject-disjoint 3-fold (outer training fraction about 2/3 in all three; the networks' nested validation removes a further 15\,\% of that outer training set from the optimization subset); "
+             r"and paired per-subject protocol contrasts. P0 = trial-random 3-fold, P1 = run-disjoint subject-overlapping 3-fold, P2 = subject-disjoint 3-fold (outer training fraction about 2/3 in all three; the networks' nested validation removes a further 15\,\% of that outer training set from the optimization subset); "
              r"within = leave-one-run-out inside each subject (networks: fixed 60 epochs). Seeds: the classical decoders use five partition seeds for P0 and P2 (P1 is deterministic); the networks use three seeds, each of which sets both the partition and the training, so their values average three partition-and-training replicates and not a five-by-three design. "
              r"$p_{\rm Holm}$: two-sided paired Wilcoxon signed-rank test over the 109 subjects (differences rounded to 12 decimals before ranking), Holm-adjusted over the 12 contrasts displayed in this table. A value whose magnitude rounds below 0.0005 is printed as 0.000 without a sign; the exact limits are in the released statistics file. Chance = 0.50.}", r"\label{tab:eegbci}", r"\centering",
              TIGHT, r"\begin{tabular}{l c c c c}", r"\hline", r"Decoder & within & P0 trial-random & P1 run-disjoint & P2 subject-disjoint \\", r"\hline"]
@@ -83,8 +88,8 @@ def main() -> int:
             row.append(cell(r["mean_acc"], r["ci_low"], r["ci_high"]) if r else "--")
         lines.append(" & ".join(row) + r" \\")
     lines += [r"\hline", r"\end{tabular}", r"\vspace{4pt}", r"\begin{tabular}{l c c c}", r"\hline",
-              r"\multicolumn{4}{l}{\textit{Paired per-subject differences}: mean [95\,\% CI]} \\", r"\hline",
-              r"Decoder & $\Delta$(P1$-$P2) subject overlap & $\Delta$(P0$-$P1) run adjacency & $\Delta_{\rm cal}$ = within$-$P2 \\", r"\hline"]
+              r"\multicolumn{4}{l}{\textit{Paired per-subject protocol contrasts}: mean [95\,\% CI]} \\", r"\hline",
+              r"Decoder & \shortstack{$\Delta$(P1$-$P2)\\run-disjoint $-$\\subject-disjoint\\(subject-overlap\\contrast)} & \shortstack{$\Delta$(P0$-$P1)\\trial-random $-$\\run-disjoint\\(run/temporal\\contrast)} & \shortstack{$\Delta_{\rm cal}$ = within$-$P2\\within-subject $-$\\subject-disjoint\\(calibration contrast)} \\", r"\hline"]
     for m in ("csp_lda", "riemann_ts_lr", "shallow_fbcsp", "eegnet_v4"):
         row = [MODEL_TEX[m]]
         for c in ("subject_overlap_component", "run_temporal_component", "calibration_gap"):
@@ -92,8 +97,8 @@ def main() -> int:
             row.append(cell(r["mean_diff"], r["ci_low"], r["ci_high"], sign=True) if r else "--")
         lines.append(" & ".join(row) + r" \\")
     lines += [r"\hline", r"\end{tabular}", r"\vspace{4pt}", r"\begin{tabular}{l c c c}", r"\hline",
-              r"\multicolumn{4}{l}{$p_{\rm Holm}$ of the same differences, Holm-adjusted over the 12 contrasts of this table} \\", r"\hline",
-              r"Decoder & $\Delta$(P1$-$P2) & $\Delta$(P0$-$P1) & $\Delta_{\rm cal}$ \\", r"\hline"]
+              r"\multicolumn{4}{l}{$p_{\rm Holm}$ of the same protocol contrasts, Holm-adjusted over the 12 contrasts of this table} \\", r"\hline",
+              r"Decoder & \shortstack{$\Delta$(P1$-$P2)\\run-disjoint $-$\\subject-disjoint\\(subject-overlap\\contrast)} & \shortstack{$\Delta$(P0$-$P1)\\trial-random $-$\\run-disjoint\\(run/temporal\\contrast)} & \shortstack{$\Delta_{\rm cal}$ = within$-$P2\\within-subject $-$\\subject-disjoint\\(calibration contrast)} \\", r"\hline"]
     for m in ("csp_lda", "riemann_ts_lr", "shallow_fbcsp", "eegnet_v4"):
         row = [MODEL_TEX[m]]
         for c in ("subject_overlap_component", "run_temporal_component", "calibration_gap"):
@@ -104,10 +109,10 @@ def main() -> int:
     (OUT / "table1_eegbci_ladder.tex").write_text("\n".join(lines) + "\n")
 
     # ------------------------------------------------------------- Table 2 BCI-IV-2a
-    lines = [r"\begin{table}", r"\caption{BCI-IV-2a (9 subjects, left- versus right-hand imagery): mean accuracy with the subject-bootstrap 95\,\% CI and paired per-subject differences. "
+    lines = [r"\begin{table}", r"\caption{BCI-IV-2a (9 subjects, left- versus right-hand imagery): mean accuracy with the subject-bootstrap 95\,\% CI and paired per-subject protocol contrasts. All intervals in this table are descriptive and unadjusted. "
              r"Protocols: within = session-to-session inside each subject (both directions averaged; training fraction 1/2); P0a = trial-random 6-fold (5/6); P1 = run-disjoint subject-overlapping 6-fold (5/6); "
-             r"P0b = trial-random 2-fold (1/2); P1s = session-disjoint subject-overlapping 2-fold (1/2); P2 = leave-one-subject-out (8/9). "
-             r"$p$: exact conditional two-sided signed-rank test ($n=9$; zeros dropped, tied ranks averaged; the smallest attainable raw $p$ is 0.0039 when all nine differences are nonzero); $p_{\rm Holm}$: Holm-adjusted over the 24 contrasts displayed in this table, so no adjusted value can fall below 0.09375 ($= 24 \times 2/2^{9}$); $n_+$ = number of subjects with a positive difference. The lower block reports the mean paired difference over the nine subjects with its subject-bootstrap CI; the individual subject differences are in the released per-subject files. Sign-flip permutation $p$-values are in the released statistics file. $p$-values are displayed rounded to three decimals.}",
+             r"P0b = trial-random 2-fold (1/2); P1s = session-disjoint subject-overlapping 2-fold (1/2); P2 = leave-one-subject-out (LOSO; 8/9). "
+             r"$p$: exact conditional two-sided signed-rank test ($n=9$; zeros dropped, tied ranks averaged; the smallest attainable raw $p$ is 0.0039 when all nine differences are nonzero); $p_{\rm Holm}$: Holm-adjusted over the 24 contrasts displayed in this table\rev{ and its continuation}, so no adjusted value can fall below 0.09375 ($= 24 \times 2/2^{9}$); $n_+$ = number of subjects with a positive difference. The lower block reports the mean paired difference over the nine subjects with its subject-bootstrap CI; the individual subject differences are in the released per-subject files. Sign-flip permutation $p$-values are in the released statistics file. $p$-values are displayed rounded to three decimals.}",
              r"\label{tab:bci2a}", r"\centering", TIGHT, r"\begin{tabular}{l c c c}", r"\hline",
              r"Decoder & within & P0a trial-random & P1 run-disjoint \\", r"\hline"]
     for m in ("csp_lda", "riemann_ts_lr", "shallow_fbcsp", "eegnet_v4"):
@@ -124,16 +129,22 @@ def main() -> int:
             r = M.get(("bci2a", "bci2a_left_right", m, p))
             row.append(cell(r["mean_acc"], r["ci_low"], r["ci_high"]) if r else "--")
         lines.append(" & ".join(row) + r" \\")
-    CONTRASTS_2A = (("subject_overlap_component_run", r"$\Delta$(P1$-$P2) subject overlap"),
-                    ("subject_overlap_component_session", r"$\Delta$(P1s$-$P2) subject overlap"),
-                    ("run_temporal_component", r"$\Delta$(P0a$-$P1) run adjacency"),
-                    ("run_session_component", r"$\Delta$(P0b$-$P1s) run/session"),
-                    ("delta_leak_original_definition", r"$\Delta$(P0a$-$P2)"),
-                    ("calibration_gap", r"$\Delta_{\rm cal}$ = within$-$P2"))
+    CONTRASTS_2A = (("subject_overlap_component_run", r"\shortstack[l]{$\Delta$(P1$-$P2)\\run-disjoint $-$ LOSO\\(subject-overlap contrast)}"),
+                    ("subject_overlap_component_session", r"\shortstack[l]{$\Delta$(P1s$-$P2)\\session-disjoint $-$ LOSO\\(subject-overlap contrast)}"),
+                    ("run_temporal_component", r"\shortstack[l]{$\Delta$(P0a$-$P1)\\trial-random $-$ run-disjoint\\(run/temporal contrast)}"),
+                    ("run_session_component", r"\shortstack[l]{$\Delta$(P0b$-$P1s)\\trial-random $-$ session-disjoint\\(run/session contrast)}"),
+                    ("delta_leak_original_definition", r"\shortstack[l]{$\Delta$(P0a$-$P2)\\trial-random $-$ LOSO\\(protocol contrast)}"),
+                    ("calibration_gap", r"\shortstack[l]{$\Delta_{\rm cal}$ = within$-$P2\\within-subject $-$ LOSO\\(calibration contrast)}"))
     lines += [r"\hline", r"\end{tabular}", r"\vspace{4pt}", r"\begin{tabular}{l l c c c c}", r"\hline",
-              r"\multicolumn{6}{l}{\textit{Paired differences over the nine subjects}} \\", r"\hline",
+              r"\multicolumn{6}{l}{\textit{Paired protocol contrasts over the nine subjects}} \\", r"\hline",
               r"Decoder & Contrast & mean [95\,\% CI] & exact $p$ & $p_{\rm Holm}$ & $n_+$/9 \\", r"\hline"]
     for m in ("csp_lda", "riemann_ts_lr", "shallow_fbcsp", "eegnet_v4"):
+        if m == "shallow_fbcsp":
+            lines += [r"\hline", r"\end{tabular}", r"\end{table}",
+                      r"\begin{table}", r"\addtocounter{table}{-1}",
+                      r"\caption{\rev{(Continued.) Paired protocol contrasts over the nine subjects for ShallowFBCSPNet and EEGNet; columns as above.}}",
+                      r"\centering", TIGHT, r"\begin{tabular}{l l c c c c}", r"\hline",
+                      r"Decoder & Contrast & mean [95\,\% CI] & exact $p$ & $p_{\rm Holm}$ & $n_+$/9 \\", r"\hline"]
         for c, lab in CONTRASTS_2A:
             r = K.get(("bci2a", "bci2a_left_right", m, c))
             if not r:
@@ -182,7 +193,7 @@ def main() -> int:
             prov.append(name)
             for r in C.read_csv(p):
                 params[(r["model"], r.get("dataset", "eegbci"))] = int(r["n_params"])
-    lines = [r"\begin{table}", r"\caption{Decoders and their settings. Feature dimension and trainable-parameter counts are given for EEGBCI (64 channels, 641 samples) and BCI-IV-2a (22 channels, 1001 samples).}",
+    lines = [r"\begin{table}", r"\caption{Decoders and their settings. Feature dimension and trainable-parameter counts are given for EEGBCI (64 channels, 641 samples) and BCI-IV-2a (22 channels, 1001 samples). \rev{lbfgs = limited-memory Broyden--Fletcher--Goldfarb--Shanno quasi-Newton solver.} \rev{For EEGNet, $F_1$ counts temporal filters, $D$ is the depth multiplier (spatial filters learned per temporal filter), and $F_2$ counts pointwise filters.}}",
              r"\label{tab:models}", r"\centering", TIGHT, r"\begin{tabular}{l p{4.7cm} p{3.0cm} p{4.0cm}}", r"\hline", r"Decoder & Features / architecture & Fitted parameters (EEGBCI / BCI-IV-2a) & Training \\", r"\hline",
              r"CSP+LDA & 6 CSP log-variance features (Ledoit--Wolf regularized covariances) & LDA on 6 features: 7 / 7 & closed form \\",
              r"TS+LR & OAS covariance, tangent space at the training Fr\'echet mean; $N_c(N_c+1)/2$ = 2080 / 253 features & $\ell_2$ logistic regression: 2081 / 254 & lbfgs, max 3000 iterations, $C$ = 1 unless swept \\",
@@ -192,7 +203,7 @@ def main() -> int:
     (OUT / "table4_models.tex").write_text("\n".join(lines) + "\n")
 
     # ------------------------------------------------------------- Supplementary: per-paradigm EEGBCI
-    lines = [TS, r"\caption{EEGBCI per paradigm (109 subjects): mean accuracy [95\,\% CI] under each protocol (top) and the paired per-subject differences (bottom). "
+    lines = [TS, r"\caption{EEGBCI per paradigm (109 subjects): mean accuracy [95\,\% CI] under each protocol (top) and the paired per-subject protocol contrasts (bottom). "
              r"The 48 contrasts displayed in this table form one Holm family, as the frozen rule requires (a family = the contrasts reported in one table); the $p_{\rm Holm}$ values are therefore adjusted over 48 tests and are larger than a per-paradigm adjustment would give. "
              r"MI = motor imagery, ME = motor execution.}", r"\label{tab:s_paradigm}", r"\centering", r"\setlength{\tabcolsep}{2pt}",
              r"\begin{tabular}{l l c c c c}", r"\hline", r"Paradigm & Decoder & within & P0 trial-random & P1 run-disjoint & P2 subject-disjoint \\", r"\hline"]
@@ -203,8 +214,8 @@ def main() -> int:
                 r = M.get(("eegbci", t, m, p)); row.append(cell(r["mean_acc"], r["ci_low"], r["ci_high"]) if r else "--")
             lines.append(" & ".join(row) + r" \\")
     lines += [r"\hline", r"\end{tabular}", r"\vspace{4pt}", r"\begin{tabular}{l l c c c}", r"\hline",
-              r"\multicolumn{5}{l}{\textit{Paired per-subject differences}: mean [95\,\% CI]} \\", r"\hline",
-              r"Paradigm & Decoder & $\Delta$(P1$-$P2) subject overlap & $\Delta$(P0$-$P1) run adjacency & $\Delta_{\rm cal}$ = within$-$P2 \\", r"\hline"]
+              r"\multicolumn{5}{l}{\textit{Paired per-subject protocol contrasts}: mean [95\,\% CI]} \\", r"\hline",
+              r"Paradigm & Decoder & \shortstack{$\Delta$(P1$-$P2)\\run-disjoint $-$\\subject-disjoint\\(subject-overlap\\contrast)} & \shortstack{$\Delta$(P0$-$P1)\\trial-random $-$\\run-disjoint\\(run/temporal\\contrast)} & \shortstack{$\Delta_{\rm cal}$ = within$-$P2\\within-subject $-$\\subject-disjoint\\(calibration contrast)} \\", r"\hline"]
     for t in C.TASKS:
         for m in ("csp_lda", "riemann_ts_lr", "shallow_fbcsp", "eegnet_v4"):
             row = [C.TASK_SHORT[t], MODEL_TEX[m]]
@@ -213,7 +224,7 @@ def main() -> int:
             lines.append(" & ".join(row) + r" \\")
     lines += [r"\hline", r"\end{tabular}", r"\vspace{4pt}", r"\begin{tabular}{l l c c c}", r"\hline",
               r"\multicolumn{5}{l}{$p_{\rm Holm}$, Holm-adjusted over the 48 contrasts of this table} \\", r"\hline",
-              r"Paradigm & Decoder & $\Delta$(P1$-$P2) & $\Delta$(P0$-$P1) & $\Delta_{\rm cal}$ \\", r"\hline"]
+              r"Paradigm & Decoder & \shortstack{$\Delta$(P1$-$P2)\\run-disjoint $-$\\subject-disjoint\\(subject-overlap\\contrast)} & \shortstack{$\Delta$(P0$-$P1)\\trial-random $-$\\run-disjoint\\(run/temporal\\contrast)} & \shortstack{$\Delta_{\rm cal}$ = within$-$P2\\within-subject $-$\\subject-disjoint\\(calibration contrast)} \\", r"\hline"]
     for t in C.TASKS:
         for m in ("csp_lda", "riemann_ts_lr", "shallow_fbcsp", "eegnet_v4"):
             row = [C.TASK_SHORT[t], MODEL_TEX[m]]
@@ -340,22 +351,44 @@ def main() -> int:
                              f"{float(r['train_test_gap_P0']):+.3f} & {float(r['train_test_gap_P2']):+.3f} \\\\")
         lines += [r"\hline", r"\end{tabular}", r"\end{table}"]
         (OUT / "tableS_width.tex").write_text("\n".join(lines) + "\n")
-    p8 = R / f"stats_{args.tag}_factorial.csv"
+    p8 = R / f"stats_{args.factorial_tag or args.tag}_factorial.csv"
     if p8.exists():
         prov.append(p8.name)
         rows = C.read_csv(p8)
+        task_labels = {**C.TASK_SHORT, "paradigm_mean": "Four-paradigm mean"}
+        ols_counts = sorted({(r["task"], int(r["n_obs"])) for r in rows if r["N"] == "ols"})
+        observation_counts = "; ".join(f"{task_labels.get(task, task)}: {n}" for task, n in ols_counts)
+        excluded = {condition for r in rows for condition in r.get("excluded_conditions", "").split(";") if condition}
+        excluded_groups = defaultdict(list)
+        for condition in excluded:
+            task, N, draw, d = condition.split(":")
+            excluded_groups[(task, int(N), int(d))].append(int(draw))
+        excluded_text = "; ".join(f"{C.TASK_SHORT.get(task, task)} ($N$ = {N}, $d$ = {d}, draws {', '.join(map(str, sorted(draws)))})"
+                                  for (task, N, d), draws in sorted(excluded_groups.items())) or "none listed"
+        pooled_counts = defaultdict(list)
+        for r in rows:
+            if r["task"] == "paradigm_mean" and r["model"] == "riemann_ts_lr" and r["N"] != "ols":
+                pooled_counts[(int(r["N"]), int(r["n_draws"]))].append(int(r["d"]))
+        pooled_text = "; ".join(f"$N$ = {N}, $d$ = {', '.join(map(str, sorted(ds)))}: {n} complete draw{'s' if n != 1 else ''}"
+                                for (N, n), ds in sorted(pooled_counts.items()))
         lines = [r"\begin{center}", r"\footnotesize", TIGHT, r"\begin{longtable}{l l r r c}",
-                 r"\caption{Within-dataset factorial (EEGBCI): mean $\Delta$(P0$-$P2) of TS+LR ($C$ = 1) over 10 random draws of $N$ sampled subjects (1 draw for $N$ = 109; P2 trains on about $2N/3$ of them) and $d$ principal components, per paradigm, with draw-bootstrap 95\,\% CI (single-draw cells have no CI); "
-                 r"the cell $N$ = 9, $d$ = 512 is not feasible (fewer training trials than components). "
-                 r"OLS rows: descriptive least-squares fit of the draw-level $\Delta$ on $\log_2 N$ and $\log_2 d$ centred at the grid means, with their product; CIs from a bootstrap that resamples whole subject draws within each $N$ (stratified by $N$, all $d$ cells of a draw kept together), over the 195 draw-by-dimension observations of each paradigm.\label{tab:s_factorial}}\\",
+                 r"\caption{Within-dataset factorial (EEGBCI): mean protocol contrast $\Delta$(P0$-$P2) of TS+LR ($C$ = 1) over feasible random draws of $N$ sampled subjects (P2 trains on about $2N/3$ of them) and $d$ principal components, per paradigm, with draw-bootstrap 95\,\% CI (single-draw cells have no CI). "
+                 r"Full dimension ($d$ = 2080) uses the raw tangent features. Infeasible dimensions are excluded from both protocols of a draw before scoring. "
+                 r"A PCA dimension requires at least $d+1$ training trials in every fold of both protocols; full dimension is always feasible. "
+                 r"CSP+LDA is also reported across $N$, with six log-variance features. "
+                 f"Excluded conditions recorded in the statistics file: {excluded_text}. "
+                 r"OLS rows: descriptive least-squares fit of the draw-level protocol contrast $\Delta$ on $\log_2 N$ and $\log_2 d$ centred at the grid means, with their product; CIs from a bootstrap that resamples whole subject draws within each $N$ (stratified by $N$, all available $d$ cells of a draw kept together). "
+                 f"Draw-by-dimension observation counts (TS+LR): {observation_counts}. "
+                 r"Four-paradigm means require all four paired paradigm values within a draw; whole complete draws are resampled together for their cell CIs. "
+                 f"Four-paradigm TS+LR cell counts: {pooled_text}." + r"\label{tab:s_factorial}}\\",
                  r"\hline", r"Paradigm & model & $N$ & $d$ & $\Delta$(P0$-$P2) [CI] \\", r"\hline", r"\endfirsthead", r"\hline", r"Paradigm & model & $N$ & $d$ & $\Delta$(P0$-$P2) [CI] \\", r"\hline", r"\endhead"]
         for r in rows:
             if r["N"] == "ols":
                 nm = {"intercept_at_grid_centre": "intercept (grid centre)", "intercept": "intercept", "log2N": "$\\log_2 N$ (per doubling)", "log2d": "$\\log_2 d$ (per doubling)", "log2N_x_log2d": "$\\log_2 N \\times \\log_2 d$"}.get(r["d"], r["d"])
-                lines.append(f"{C.TASK_SHORT.get(r['task'], r['task'])} & OLS slope & \\multicolumn{{2}}{{l}}{{{nm}}} & {cell(r['inflation_mean'], r['ci_low'], r['ci_high'], sign=True)} \\\\")
+                lines.append(f"{task_labels.get(r['task'], r['task'])} & OLS slope & \\multicolumn{{2}}{{l}}{{{nm}}} & {cell(r['inflation_mean'], r['ci_low'], r['ci_high'], sign=True)} \\\\")
             else:
                 val = cell(r['inflation_mean'], r['ci_low'], r['ci_high'], sign=True) if r['ci_low'] not in ('nan', '') else f"{float(r['inflation_mean']):+.3f} (single draw)"
-                lines.append(f"{C.TASK_SHORT.get(r['task'], r['task'])} & {MODEL_TEX.get(r['model'], r['model'])} & {r['N']} & {r['d']} & {val} \\\\")
+                lines.append(f"{task_labels.get(r['task'], r['task'])} & {MODEL_TEX.get(r['model'], r['model'])} & {r['N']} & {r['d']} & {val} \\\\")
         lines += [r"\hline", r"\end{longtable}", r"\end{center}"]
         (OUT / "tableS_factorial.tex").write_text("\n".join(lines) + "\n")
 
@@ -365,15 +398,29 @@ def main() -> int:
     if e15.exists():
         prov.append(e15.name)
         rows = C.read_csv(e15)
+        p0s = R / f"e15_{args.p0s_tag}_summary.csv"
+        if p0s != e15:
+            prov.append(p0s.name)
+            rows += [r for r in C.read_csv(p0s) if r["protocol"] == "trial_random_sc"]
         agg = defaultdict(list)
         for r in rows:
             agg[(r["task"], r["protocol"])].append((float(r["subject_prior_accuracy_mean"]), float(r["corr_train_test_class_fraction"]) if r["corr_train_test_class_fraction"] not in ("nan", "") else float("nan")))
         lines = [TS, r"\caption{Exploratory (added after the ladder results were seen): a predictor that outputs the majority class of the subject's own training trials (global prior for subject-disjoint folds), and the correlation between a subject's training and test class-1 fractions across (subject, fold) cells. Means over partition seeds (five for P0 and P2, one for P1). "
+                 r"\rev{P0s rows add the subject-by-class-stratified trial-random control (five seeds); their accuracy is the seed mean with the minimum and maximum over seeds in brackets, and their correlation is the seed mean.} "
                  r"`--' = not defined: subject-disjoint folds contain no training trials of the test subject, so that subject has no training class fraction to correlate.}",
                  r"\label{tab:s_e15}", r"\centering", TIGHT, r"\begin{tabular}{l l c c}", r"\hline", r"Paradigm & protocol & subject-prior accuracy & corr(train, test class fraction) \\", r"\hline"]
         for (task, protocol), v in sorted(agg.items(), key=lambda kv: (C.TASKS.index(kv[0][0]), kv[0][1])):
-            cval = np.nanmean([c for _, c in v])
-            lines.append(f"{C.TASK_SHORT[task]} & {protocol.replace('_', ' ')} & {np.mean([a for a, _ in v]):.3f} & {('%+.3f' % cval) if cval == cval else '--'} \\\\")
+            correlations = [c for _, c in v if np.isfinite(c)]
+            cval = np.mean(correlations) if correlations else float("nan")
+            accuracy = f"{np.mean([a for a, _ in v]):.3f}"
+            label = protocol.replace('_', ' ')
+            correlation = ('%+.3f' % cval) if cval == cval else '--'
+            cells = [C.TASK_SHORT[task], label, accuracy, correlation]
+            if protocol == "trial_random_sc":
+                cells[1] = "P0s"
+                cells[2] += f" [{min(a for a, _ in v):.3f}, {max(a for a, _ in v):.3f}]"
+                cells = [r"\rev{" + c + "}" for c in cells]
+            lines.append(" & ".join(cells) + r" \\")
         lines += [r"\hline", r"\end{tabular}", r"\end{table}"]
         (OUT / "tableS_e15.tex").write_text("\n".join(lines) + "\n")
 
@@ -420,7 +467,7 @@ def main() -> int:
     if g5:
         lines = [TS, r"\caption{BCI-IV-2a: the five-fold subject-grouped split of the original submission versus leave-one-subject-out (LOSO), for the four decoders (9 subjects; networks averaged over three seeds, classical decoders over five partition seeds for the five-fold split). "
                  r"Both splits are subject-disjoint; they differ in the number of test subjects per fold (about two versus one) and hence in the training fraction (about 7/9 versus 8/9). "
-                 r"$p$ is the exact conditional two-sided signed-rank test over the nine subjects and is \emph{descriptive}: this comparison appears in no Holm family and is reported unadjusted.}",
+                 r"$p$ is the exact conditional two-sided signed-rank test over the nine subjects and is \emph{descriptive}: this comparison appears in no Holm family and is reported unadjusted; the subject-bootstrap 95\,\% CIs are likewise descriptive and unadjusted, not a substitute for multiplicity-adjusted confirmation.}",
                  r"\label{tab:s_groupkfold}", r"\centering", TIGHT, r"\begin{tabular}{l c c c c}", r"\hline",
                  r"Decoder & five-fold subject-grouped [95\,\% CI] & LOSO [95\,\% CI] & difference [95\,\% CI] & raw $p$; $n_+$/9 \\", r"\hline"]
         for m in ("csp_lda", "riemann_ts_lr", "shallow_fbcsp", "eegnet_v4"):

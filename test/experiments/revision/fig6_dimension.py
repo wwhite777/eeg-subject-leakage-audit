@@ -3,11 +3,11 @@
 points; (b) factorial heat map of Δ(P0 − P2) over sampled-subject count N × tangent dimension d (E8, TS+LR);
 (c) CSP+LDA and TS+LR (full dimension) inflation versus N with draw-level points.
 
-Codex r002 finding F-r002-2: for N < 109 the interval in (c) is a bootstrap over the TEN SUBJECT DRAWS after
+Review correction r002 F-r002-2: for N < 109 the interval in (c) is a bootstrap over the TEN SUBJECT DRAWS after
 averaging the four paradigms within each matching draw (same draw id across paradigms), not over the 40
 paradigm x draw cells; no interval at N = 109, where a single draw exists. N is the number of SAMPLED
 subjects (P2 trains on about 2N/3 of them).
-Codex r003 finding F-r003-5: the logarithmic x axes of (a) and (c) are labelled with the plain d and N
+Review correction r003 F-r003-5: the logarithmic x axes of (a) and (c) are labelled with the plain d and N
 values (no 10^{x} mathtext, whose exponent printed at 5.6 pt), and fig_common.save() re-measures every
 glyph of the PDF companion before the figure is written.
 Usage: fig6_dimension.py --e4 <per_subject.csv> --e8 <per_draw.csv> --tag rev1
@@ -85,25 +85,25 @@ def main() -> int:
     cells = defaultdict(dict)
     for r in e8:
         cells[(r["task"], r["model"], int(r["N"]), int(r["d"]), int(r["draw"]))][r["protocol"]] = float(r["mean_acc"])
-    by_draw = defaultdict(lambda: defaultdict(list))  # (model, N, d) -> draw -> [per-paradigm inflation]
+    by_draw = defaultdict(lambda: defaultdict(dict))  # (model, N, d) -> draw -> {task: paired contrast}
     for (task, model, N, d, draw), p in cells.items():
         if "trial_random" in p and "subject_disjoint" in p:
-            by_draw[(model, N, d)][draw].append(p["trial_random"] - p["subject_disjoint"])
+            by_draw[(model, N, d)][draw][task] = p["trial_random"] - p["subject_disjoint"]
 
     def draw_means(key):
         """One value per subject draw: the mean over the four paradigms of that same draw (F-r002-2)."""
         d = by_draw.get(key, {})
-        return np.array([float(np.mean(v)) for _, v in sorted(d.items())])
+        return np.array([float(np.mean([v[t] for t in C.TASKS])) for _, v in sorted(d.items()) if set(v) == set(C.TASKS)])
 
     Ns = sorted({k[1] for k in by_draw if k[0] == "riemann_ts_lr"}); Ds = sorted({k[2] for k in by_draw if k[0] == "riemann_ts_lr"})
-    M = np.array([[draw_means(("riemann_ts_lr", N, d)).mean() if by_draw.get(("riemann_ts_lr", N, d)) else np.nan for d in Ds] for N in Ns])
+    M = np.array([[v.mean() if len(v := draw_means(("riemann_ts_lr", N, d))) else np.nan for d in Ds] for N in Ns])
     vmax = np.nanmax(np.abs(M))
     im = ax.imshow(np.ma.masked_invalid(M), cmap="RdBu_r", vmin=-vmax, vmax=vmax, aspect="auto", origin="lower")
     for i, N in enumerate(Ns):
         for j, d in enumerate(Ds):
             if np.isnan(M[i, j]):
                 ax.text(j, i, "not feasible", ha="center", va="center", fontsize=8, color="#666666")
-                cap.append(f"N={N} d={d}: not feasible (fewer training trials than components)")
+                cap.append(f"N={N} d={d}: not feasible (no draw has all four feasible paired paradigm values)")
                 continue
             ax.text(j, i, f"{M[i, j]:+.3f}", ha="center", va="center", fontsize=8, color="black")
             nd = len(draw_means(("riemann_ts_lr", N, d)))
@@ -115,7 +115,7 @@ def main() -> int:
     # (c) N sweep for CSP+LDA and full-d TS+LR, with the ten subject draws as points
     ax = fig.add_subplot(gs[2])
     for m, d, lab in (("csp_lda", 6, "CSP+LDA (6 log-variance features)"), ("riemann_ts_lr", max(Ds), f"TS+LR (d = {max(Ds)})")):
-        xs = sorted({k[1] for k in by_draw if k[0] == m and k[2] == d})
+        xs = sorted({k[1] for k in by_draw if k[0] == m and k[2] == d and len(draw_means(k))})
         means, los, his = [], [], []
         for N in xs:
             v = draw_means((m, N, d))
@@ -128,7 +128,7 @@ def main() -> int:
         ax.plot(xs, means, marker=F.MODEL_MARK[m], ms=4, color=F.MODEL_COLOR[m], label=lab, zorder=5)
         ok = [i for i, l in enumerate(los) if l == l]
         ax.fill_between([xs[i] for i in ok], [los[i] for i in ok], [his[i] for i in ok], color=F.MODEL_COLOR[m], alpha=0.2, linewidth=0)
-        cap.append(f"{lab} vs N: " + ", ".join((f"N={N}: {mm:+.3f} [{lo:+.3f},{hi:+.3f}] (10 draws)" if lo == lo else f"N={N}: {mm:+.3f} (single draw, no interval)")
+        cap.append(f"{lab} vs N: " + ", ".join((f"N={N}: {mm:+.3f} [{lo:+.3f},{hi:+.3f}] ({len(draw_means((m, N, d)))} complete draws)" if lo == lo else f"N={N}: {mm:+.3f} (single draw, no interval)")
                                                for N, mm, lo, hi in zip(xs, means, los, his)))
     ax.axhline(0, color="#888888", lw=0.8, ls="--"); ax.set_xscale("log"); F.plain_log_ticks(ax, "x", Ns, INT)
     ax.set_xlabel("Sampled subjects N (count; P2 trains on about 2N/3 of them)")
@@ -138,11 +138,12 @@ def main() -> int:
     ax.set_title("(c) Δ(P0 − P2) versus sampled-subject count\n(points = subject draws, paradigm mean within each draw)")
     fig.tight_layout(h_pad=1.0, w_pad=1.2)
     caption = ("Figure 6. Feature dimension and subject count within EEGBCI. (a) TS+LR accuracy after projecting the tangent features on the first d principal "
-               "components fitted on each training fold (paradigm mean; lines = mean, bands = subject-bootstrap 95 % CI; the right axis shows the per-subject Δ(P1 − P2), points = subjects). "
-               "(b) Mean Δ(P0 − P2) of TS+LR for random subsets of N sampled subjects (ten draws for fewer than 109 subjects, one draw at 109) and d principal components; each cell is the mean over "
-               "the draws of the four-paradigm mean within a draw. "
-               "(c) Δ(P0 − P2) versus N for CSP+LDA (six log-variance features) and full-dimension TS+LR. Each point is one subject draw, averaged over the four paradigms of that same draw; "
-               "line = mean over draws; band = 95 % bootstrap over the ten subject draws (paradigm mean within each draw); no band at N = 109, where a single draw exists. "
+               "components fitted on each training fold (paradigm mean; lines = mean, bands = subject-bootstrap 95 % CI; the right axis shows the per-subject subject-overlap contrast Δ(P1 − P2), points = subjects). "
+               "(b) Mean protocol contrast Δ(P0 − P2) of TS+LR for random subsets of N sampled subjects (up to ten draws for fewer than 109 subjects, one draw at 109) and d principal components; each cell is the mean over "
+               "complete draws of the four-paradigm mean within a draw, requiring all four paired paradigm values. Full dimension uses the raw tangent features. "
+               "A PCA dimension requires at least d+1 training trials in every fold of both protocols; full dimension is always feasible. "
+               "(c) Protocol contrast Δ(P0 − P2) versus N for CSP+LDA (six log-variance features) and full-dimension TS+LR. Each point is one complete subject draw, averaged over the four paradigms of that same draw; "
+               "line = mean over complete draws; band = 95 % bootstrap over whole complete subject draws (paradigm mean within each draw); no band at N = 109, where a single draw exists. "
                "N counts the sampled subjects; the subject-disjoint protocol trains on about 2N/3 of them. Values: " + " | ".join(cap))
     F.save(fig, f"fig6_dimension_{args.tag}", caption, [Path(args.e4), Path(args.e8)])
     return 0
